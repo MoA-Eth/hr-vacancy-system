@@ -14,8 +14,8 @@ class VacancyListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'department', 'location', 'employment_type',
             'workplace_type', 'experience_level', 'category',
-            'status', 'positions_available', 'deadline', 'posted_by_name',
-            'is_open', 'created_at'
+            'description', 'status', 'positions_available', 'deadline', 
+            'posted_by_name', 'is_open', 'created_at'
         ]
         read_only_fields = ['id', 'created_at', 'posted_by_name', 'is_open']
 

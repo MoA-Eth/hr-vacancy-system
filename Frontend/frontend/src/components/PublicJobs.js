@@ -183,10 +183,13 @@ function PublicJobs() {
                 <p className="job-description">
                   {vacancy.description ? vacancy.description.substring(0, 150) + '...' : 'No description available'}
                 </p>
-                <div className="job-footer">
-                  <span className="positions">
-                    {vacancy.positions_available} position{vacancy.positions_available > 1 ? 's' : ''} available
-                  </span>
+                <div className="job-actions">
+                  <button 
+                    onClick={() => navigate(`/jobs/${vacancy.id}`)}
+                    className="view-more-btn"
+                  >
+                    View More
+                  </button>
                   {isDeadlinePassed ? (
                     <button className="apply-btn disabled" disabled>
                       Deadline Passed
@@ -199,6 +202,11 @@ function PublicJobs() {
                       Apply Now
                     </button>
                   )}
+                </div>
+                <div className="job-footer">
+                  <span className="positions">
+                    {vacancy.positions_available} position{vacancy.positions_available > 1 ? 's' : ''} available
+                  </span>
                 </div>
                 <div className={`deadline ${isDeadlinePassed ? 'expired' : daysRemaining <= 3 ? 'urgent' : ''}`}>
                   {isDeadlinePassed ? (

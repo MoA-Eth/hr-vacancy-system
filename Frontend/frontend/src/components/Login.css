@@ -3,11 +3,11 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #66ea8e 0%, #1eca74b7 100%, #66ea8e 100%);
+  background: linear-gradient(135deg, #077829 0%, #078f209a 100%);
 }
 
 .login-box {
-  background: white;
+  background: rgb(255, 255, 255);
   padding: 40px;
   border-radius: 10px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
@@ -50,13 +50,13 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #8cb90fbb;
 }
 
 button {
   width: 100%;
   padding: 12px;
-  background: #667eea;
+  background: #ddea66;
   color: white;
   border: none;
   border-radius: 5px;
@@ -67,7 +67,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: #5568d3;
+  background: #718f07;
 }
 
 button:disabled {
@@ -91,7 +91,7 @@ button:disabled {
 }
 
 .register-link a {
-  color: #667eea;
+  color: #197b05;
   text-decoration: none;
   font-weight: 500;
 }

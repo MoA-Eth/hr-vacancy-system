@@ -8,6 +8,7 @@ import VacancyList from './components/VacancyList';
 import VacancyForm from './components/VacancyForm';
 import ApplicationList from './components/ApplicationList';
 import PublicJobs from './components/PublicJobs';
+import PublicJobDetail from './components/PublicJobDetail';
 import ApplyForm from './components/ApplyForm';
 import ApplicationDetail from './components/ApplicationDetail';
 import ScheduleInterview from './components/ScheduleInterview';
@@ -22,6 +23,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/jobs" element={<PublicJobs />} />
+          <Route path="/jobs/:id" element={<PublicJobDetail />} />
           <Route path="/apply/:vacancyId" element={<ApplyForm />} />
           
           <Route
