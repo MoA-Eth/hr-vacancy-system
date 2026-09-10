@@ -307,11 +307,13 @@ function ApplicationDetail() {
                   {application.candidate.training_history.map((train, index) => (
                     <div key={index} className="training-item">
                       <div className="train-header">
-                        <h3>{train.course_name || train.title}</h3>
-                        <span className="train-year">{train.year || train.completion_date}</span>
+                        <h3>{train.degree || train.course_name || train.title}</h3>
+                        <span className="train-year">{train.end_date || train.year || train.completion_date}</span>
                       </div>
-                      <p className="train-institution">{train.institution || train.provider}</p>
-                      {train.duration && <p className="train-duration">Duration: {train.duration}</p>}
+                      <p className="train-institution">{train.field_of_study || train.institution || train.provider}</p>
+                      {train.start_date && train.end_date && (
+                        <p className="train-duration">Period: {train.start_date} to {train.end_date}</p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -340,19 +342,31 @@ function ApplicationDetail() {
                     </a>
                   </div>
                 )}
-                {application.candidate.cover_letter_file && (
+                {application.candidate.education_documents && (
                   <div className="document-item">
-                    <div className="doc-icon">📝</div>
+                    <div className="doc-icon">🎓</div>
                     <div className="doc-info">
-                      <h3>Cover Letter</h3>
+                      <h3>Education Documents</h3>
                       <p>Uploaded on {new Date(application.applied_at).toLocaleDateString()}</p>
                     </div>
-                    <a href={application.candidate.cover_letter_file} target="_blank" rel="noopener noreferrer" className="btn-download">
+                    <a href={application.candidate.education_documents} target="_blank" rel="noopener noreferrer" className="btn-download">
                       Download
                     </a>
                   </div>
                 )}
-                {(!application.candidate.resume && !application.candidate.cover_letter_file) && (
+                {application.candidate.other_documents && (
+                  <div className="document-item">
+                    <div className="doc-icon">📎</div>
+                    <div className="doc-info">
+                      <h3>Other Documents</h3>
+                      <p>Uploaded on {new Date(application.applied_at).toLocaleDateString()}</p>
+                    </div>
+                    <a href={application.candidate.other_documents} target="_blank" rel="noopener noreferrer" className="btn-download">
+                      Download
+                    </a>
+                  </div>
+                )}
+                {(!application.candidate.resume && !application.candidate.education_documents && !application.candidate.other_documents) && (
                   <p className="empty-message">No documents uploaded</p>
                 )}
               </div>
