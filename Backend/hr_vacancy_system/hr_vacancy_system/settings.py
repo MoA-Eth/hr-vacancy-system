@@ -10,29 +10,46 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
+
 from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
+# ---------------------------------------------------------------------------
+# Core / security
+# ---------------------------------------------------------------------------
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-my=l@ar%+c-t54ze1wta-7h9oe!vul)^mr$wl)kvil1hcevhv*'
+# Read from the environment (.env) - do NOT hardcode it in the repository.
+SECRET_KEY = config('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# Never run with DEBUG=True in production.
 DEBUG = config('DEBUG', default=False, cast=bool)
 
+# Example .env value: ALLOWED_HOSTS=jobportal.moa.gov.et,196.191.93.56,10.10.20.167,localhost
+ALLOWED_HOSTS = [h.strip() for h in config('ALLOWED_HOSTS', default='').split(',') if h.strip()]
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+# Needed for admin login / forms when served through the domain.
+CSRF_TRUSTED_ORIGINS = [
+    'http://jobportal.moa.gov.et',
+    'https://jobportal.moa.gov.et',
+    'http://196.191.93.56',
+    'http://10.10.20.167',
+]
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+# ---------------------------------------------------------------------------
 # Application definition
+# ---------------------------------------------------------------------------
+
 AUTH_USER_MODEL = 'accounts.User'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -50,6 +67,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -79,8 +97,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'hr_vacancy_system.wsgi.application'
 
 
+# ---------------------------------------------------------------------------
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
+# ---------------------------------------------------------------------------
 
 DATABASES = {
     'default': {
@@ -93,8 +113,11 @@ DATABASES = {
     }
 }
 
+
+# ---------------------------------------------------------------------------
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
+# ---------------------------------------------------------------------------
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -112,36 +135,55 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# ---------------------------------------------------------------------------
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
+# ---------------------------------------------------------------------------
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
+# ---------------------------------------------------------------------------
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
+#
+# '/django-static/' (not '/static/') so it does not clash with the React
+# app's own /static/js and /static/css files. Nginx serves this path from
+# STATIC_ROOT (see nginx.conf: location /django-static/).
+# ---------------------------------------------------------------------------
 
-STATIC_URL = 'static/'
+STATIC_URL = '/django-static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-# Media files (uploads)
+
+
+# ---------------------------------------------------------------------------
+# Media files (uploads such as resumes and transcripts)
+# Nginx serves /media/ directly from MEDIA_ROOT (shared docker volume).
+# ---------------------------------------------------------------------------
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 
+# ---------------------------------------------------------------------------
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
+# ---------------------------------------------------------------------------
 
 MAILERS = {
     'default': {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+
+# ---------------------------------------------------------------------------
+# Django REST Framework / JWT
+# ---------------------------------------------------------------------------
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -151,16 +193,32 @@ REST_FRAMEWORK = {
     ),
 }
 
-from datetime import timedelta
-
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
+
+
+# ---------------------------------------------------------------------------
 # File upload settings
+# ---------------------------------------------------------------------------
+
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
-MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
-CORS_ALLOW_ALL_ORIGINS = True
+
+
+# ---------------------------------------------------------------------------
+# CORS
+# The frontend and API share one domain through Nginx, so only these
+# origins need to be allowed. Add the https:// versions when HTTPS is enabled.
+# ---------------------------------------------------------------------------
+
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    'http://jobportal.moa.gov.et',
+    'https://jobportal.moa.gov.et',
+    'http://196.191.93.56',
+    'http://10.10.20.167',
+]
