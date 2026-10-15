@@ -34,11 +34,14 @@ ALLOWED_HOSTS = [h.strip() for h in config('ALLOWED_HOSTS', default='').split(',
 
 # Needed for admin login / forms when served through the domain.
 CSRF_TRUSTED_ORIGINS = [
-    'http://jobportal.moa.gov.et',
     'https://jobportal.moa.gov.et',
-    'http://196.191.93.56',
-    'http://10.10.20.167',
 ]
+
+# HTTPS behind the Nginx reverse proxy (Nginx terminates TLS and sets
+# X-Forwarded-Proto). Nginx already redirects HTTP -> HTTPS.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -212,13 +215,10 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 # ---------------------------------------------------------------------------
 # CORS
 # The frontend and API share one domain through Nginx, so only these
-# origins need to be allowed. Add the https:// versions when HTTPS is enabled.
+# origins need to be allowed.
 # ---------------------------------------------------------------------------
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
-    'http://jobportal.moa.gov.et',
     'https://jobportal.moa.gov.et',
-    'http://196.191.93.56',
-    'http://10.10.20.167',
 ]
