@@ -66,14 +66,14 @@ function PublicJobDetail() {
       <Header />
 
       {/* Hero banner */}
-      <div className="bg-primary-600 text-white py-10 px-6">
+      <div className="bg-primary-600 text-white py-8 md:py-10 px-4 md:px-6">
         <div className="max-w-5xl mx-auto">
-          <button onClick={() => navigate('/jobs')} className="flex items-center gap-1 text-primary-100 hover:text-white text-sm mb-5 transition-colors">
+          <button onClick={() => navigate('/jobs')} className="flex items-center gap-1 text-primary-100 hover:text-white text-sm mb-4 transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             All Jobs
           </button>
-          <h1 className="text-2xl font-bold mb-1">{vacancy.title}</h1>
-          <div className="flex flex-wrap gap-x-5 gap-y-1 text-primary-100 text-sm mt-2">
+          <h1 className="text-xl md:text-2xl font-bold mb-1">{vacancy.title}</h1>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-primary-100 text-sm mt-2">
             <span>{vacancy.department_name}</span>
             <span>{vacancy.location}</span>
             <span>{formatLabel(vacancy.employment_type)}</span>
@@ -82,15 +82,15 @@ function PublicJobDetail() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
-        <div className="flex gap-7 items-start">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-6 md:py-8">
+        <div className="flex flex-col-reverse md:flex-row gap-6 md:gap-7 items-start">
 
           {/* Main content */}
-          <div className="flex-1 min-w-0 space-y-5">
+          <div className="flex-1 min-w-0 w-full space-y-5">
 
             {/* Quick info bar */}
             <div className="card p-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center divide-x divide-gray-100">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center divide-x divide-gray-100">
                 {[
                   { label: 'Salary', value: formatSalary(vacancy.min_salary, vacancy.max_salary) },
                   { label: 'Experience', value: formatLabel(vacancy.experience_level) || '—' },
@@ -136,8 +136,8 @@ function PublicJobDetail() {
             )}
           </div>
 
-          {/* Sticky sidebar */}
-          <div className="w-64 flex-shrink-0 sticky top-20 space-y-4">
+          {/* Sidebar — full width on mobile, fixed width on desktop */}
+          <div className="w-full md:w-64 md:flex-shrink-0 md:sticky md:top-20 space-y-4">
             <div className="card p-5">
               {/* Deadline */}
               <div className={`text-center mb-4 pb-4 border-b border-gray-100`}>

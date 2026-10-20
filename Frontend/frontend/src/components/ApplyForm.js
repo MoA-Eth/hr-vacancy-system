@@ -233,7 +233,7 @@ function ApplyForm() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-2xl mx-auto px-6 py-8">
+      <div className="max-w-2xl mx-auto px-4 md:px-6 py-6 md:py-8">
         <button onClick={() => navigate('/jobs')} className="btn-ghost mb-4">← Back to Jobs</button>
 
         {/* Job banner */}
@@ -296,7 +296,7 @@ function ApplyForm() {
                     <input type="text" name="full_name" className={`form-input ${fieldErrors.full_name ? 'border-red-400' : ''}`} value={formData.full_name} onChange={handleChange} />
                     {fieldErrors.full_name && <p className="form-error">{fieldErrors.full_name}</p>}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="form-label">Email *</label>
                       <input type="email" name="email" className={`form-input ${fieldErrors.email ? 'border-red-400' : ''}`} value={formData.email} onChange={handleChange} />
@@ -313,7 +313,7 @@ function ApplyForm() {
                     <input type="text" name="state" className={`form-input ${fieldErrors.state ? 'border-red-400' : ''}`} value={formData.state} onChange={handleChange} placeholder="e.g., Addis Ababa, Oromia" />
                     {fieldErrors.state && <p className="form-error">{fieldErrors.state}</p>}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div><label className="form-label">Zone</label><input type="text" name="zone" className="form-input" value={formData.zone} onChange={handleChange} placeholder="Optional" /></div>
                     <div><label className="form-label">Woreda</label><input type="text" name="woreda" className="form-input" value={formData.woreda} onChange={handleChange} placeholder="Optional" /></div>
                     <div><label className="form-label">Kebele</label><input type="text" name="kebele" className="form-input" value={formData.kebele} onChange={handleChange} placeholder="Optional" /></div>
@@ -355,7 +355,7 @@ function ApplyForm() {
                             {educationHistory.length > 1 && <button type="button" onClick={() => removeEducationEntry(i)} className="text-xs text-red-500 hover:text-red-700">Remove</button>}
                           </div>
                           <input type="text" className="form-input" placeholder="Institution" value={edu.institution} onChange={(e) => handleEducationChange(i,'institution',e.target.value)} />
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input type="text" className="form-input" placeholder="Degree" value={edu.degree} onChange={(e) => handleEducationChange(i,'degree',e.target.value)} />
                             <input type="text" className="form-input" placeholder="Field of Study" value={edu.field_of_study} onChange={(e) => handleEducationChange(i,'field_of_study',e.target.value)} />
                             <input type="month" className="form-input" value={edu.start_date} onChange={(e) => handleEducationChange(i,'start_date',e.target.value)} />
@@ -376,7 +376,7 @@ function ApplyForm() {
                             <span className="text-xs font-medium text-gray-500">Entry {i+1}</span>
                             {trainingHistory.length > 1 && <button type="button" onClick={() => removeTrainingEntry(i)} className="text-xs text-red-500 hover:text-red-700">Remove</button>}
                           </div>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <input type="text" className="form-input" placeholder="Training Name" value={t.degree} onChange={(e) => handleTrainingChange(i,'degree',e.target.value)} />
                             <input type="text" className="form-input" placeholder="Institution" value={t.field_of_study} onChange={(e) => handleTrainingChange(i,'field_of_study',e.target.value)} />
                             <input type="month" className="form-input" value={t.start_date} onChange={(e) => handleTrainingChange(i,'start_date',e.target.value)} />

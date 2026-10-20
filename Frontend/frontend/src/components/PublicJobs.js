@@ -8,6 +8,7 @@ function PublicJobs() {
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -108,7 +109,7 @@ function PublicJobs() {
 
       {/* Hero Banner */}
       <div
-        className="relative text-white py-20 px-6"
+        className="relative text-white py-12 md:py-20 px-4 md:px-6"
         style={{
           backgroundImage: `url(${heroBg})`,
           backgroundSize: 'cover',
@@ -119,10 +120,10 @@ function PublicJobs() {
         <div className="absolute inset-0 bg-primary-900/70" />
         <div className="relative max-w-6xl mx-auto">
           <p className="text-primary-200 text-xs font-semibold uppercase tracking-widest mb-3">We're Hiring</p>
-          <h1 className="text-4xl font-bold mb-2">Find Your Next Opportunity</h1>
-          <p className="text-primary-100 text-base mb-8 max-w-lg">Browse {vacancies.length} open position{vacancies.length !== 1 ? 's' : ''} and take the next step in your career.</p>
+          <h1 className="text-2xl md:text-4xl font-bold mb-2">Find Your Next Opportunity</h1>
+          <p className="text-primary-100 text-sm md:text-base mb-6 md:mb-8 max-w-lg">Browse {vacancies.length} open position{vacancies.length !== 1 ? 's' : ''} and take the next step in your career.</p>
           {/* Hero search bar */}
-          <div className="flex gap-2 max-w-xl">
+          <div className="flex flex-col sm:flex-row gap-2 max-w-xl">
             <div className="flex-1 relative">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 111 11a6 6 0 0116 0z" />
@@ -147,11 +148,51 @@ function PublicJobs() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 md:py-8">
+
+        {/* Mobile filter toggle */}
+        <div className="flex items-center justify-between mb-4 md:hidden">
+          <p className="text-sm text-gray-500">
+            <span className="font-semibold text-gray-900">{filteredVacancies.length}</span> position{filteredVacancies.length !== 1 ? 's' : ''}
+          </p>
+          <button
+            onClick={() => setFiltersOpen(o => !o)}
+            className="flex items-center gap-1.5 text-sm font-medium text-primary-600 border border-primary-200 rounded-lg px-3 py-1.5"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" /></svg>
+            Filters {hasActiveFilters && <span className="bg-primary-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{[typeFilter,workplaceFilter,experienceFilter,categoryFilter].filter(Boolean).length}</span>}
+          </button>
+        </div>
+
+        {/* Mobile filters panel */}
+        {filtersOpen && (
+          <div className="md:hidden card p-4 mb-4 grid grid-cols-2 gap-3">
+            {[
+              { label: 'Type', value: typeFilter, setter: setTypeFilter, options: employmentTypes },
+              { label: 'Workplace', value: workplaceFilter, setter: setWorkplaceFilter, options: workplaceTypes },
+              { label: 'Experience', value: experienceFilter, setter: setExperienceFilter, options: experienceLevels },
+              { label: 'Category', value: categoryFilter, setter: setCategoryFilter, options: categories },
+            ].map(({ label, value, setter, options }) => options.length > 0 && (
+              <div key={label}>
+                <label className="form-label">{label}</label>
+                <select value={value} onChange={(e) => setter(e.target.value)} className="form-input text-xs">
+                  <option value="">All</option>
+                  {options.map(o => <option key={o} value={o}>{formatLabel(o)}</option>)}
+                </select>
+              </div>
+            ))}
+            {hasActiveFilters && (
+              <div className="col-span-2">
+                <button onClick={() => { resetFilters(); setFiltersOpen(false); }} className="text-xs text-primary-600 font-medium">Clear all filters</button>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-7">
 
-          {/* Sidebar Filters */}
-          <aside className="w-52 flex-shrink-0">
+          {/* Sidebar Filters — desktop only */}
+          <aside className="hidden md:block w-44 flex-shrink-0">
             <div className="card p-4 space-y-4 sticky top-20">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-800">Filters</h3>
@@ -179,7 +220,7 @@ function PublicJobs() {
 
           {/* Job Listings */}
           <main className="flex-1 min-w-0">
-            <div className="flex items-center justify-between mb-5">
+            <div className="hidden md:flex items-center justify-between mb-5">
               <p className="text-sm text-gray-500">
                 {hasActiveFilters
                   ? <><span className="font-semibold text-gray-900">{filteredVacancies.length}</span> result{filteredVacancies.length !== 1 ? 's' : ''} found</>
@@ -200,7 +241,7 @@ function PublicJobs() {
                 <button onClick={resetFilters} className="btn-secondary text-sm">Clear Filters</button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {filteredVacancies.map((v) => {
                   const isExpired = new Date(v.deadline) < new Date();
                   const days = Math.ceil((new Date(v.deadline) - new Date()) / (1000 * 60 * 60 * 24));
@@ -219,7 +260,7 @@ function PublicJobs() {
                             </svg>
                           </div>
                           <div>
-                            <h3 className="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors leading-tight">{v.title}</h3>
+                            <h3 className="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors leading-tight line-clamp-2">{v.title}</h3>
                             <p className="text-xs text-gray-400 mt-0.5">{v.department_name}</p>
                           </div>
                         </div>
