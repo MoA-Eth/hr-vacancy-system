@@ -1,13 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../api/auth';
-import './Register.css';
+import { departmentAPI } from '../api/departments';
 
 function Register() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [departments, setDepartments] = useState([]);
+
+  useEffect(() => {
+    departmentAPI.getAll()
+      .then(setDepartments)
+      .catch((err) => console.error('Failed to load departments', err));
+  }, []);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -52,129 +59,98 @@ function Register() {
 
   if (success) {
     return (
-      <div className="register-container">
-        <div className="success-box">
-          <h2>✅ Registration Successful!</h2>
-          <p>Your account has been created. Redirecting to login...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="card p-10 text-center">
+          <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Registration Successful!</h2>
+          <p className="text-gray-500">Your account has been created. Redirecting to login...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="register-container">
-      <div className="register-box">
-        <h2>HR Vacancy System</h2>
-        <h3>Create Account</h3>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-8">
+      <div className="w-full max-w-lg">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
+          <p className="text-sm text-gray-500 mt-1">HR Vacancy System</p>
+        </div>
 
-        {error && <div className="error-message">{error}</div>}
+        <div className="card p-8">
+          {error && (
+            <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-row">
-            <div className="form-group">
-              <label>First Name *</label>
-              <input
-                type="text"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                required
-              />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="form-label">First Name *</label>
+                <input type="text" name="first_name" className="form-input" value={formData.first_name} onChange={handleChange} required />
+              </div>
+              <div>
+                <label className="form-label">Last Name *</label>
+                <input type="text" name="last_name" className="form-input" value={formData.last_name} onChange={handleChange} required />
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>Last Name *</label>
-              <input
-                type="text"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Username *</label>
-            <input
-              type="text"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Email *</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Password *</label>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                minLength="8"
-              />
+            <div>
+              <label className="form-label">Username *</label>
+              <input type="text" name="username" className="form-input" value={formData.username} onChange={handleChange} required />
             </div>
 
-            <div className="form-group">
-              <label>Confirm Password *</label>
-              <input
-                type="password"
-                name="password2"
-                value={formData.password2}
-                onChange={handleChange}
-                required
-                minLength="8"
-              />
+            <div>
+              <label className="form-label">Email *</label>
+              <input type="email" name="email" className="form-input" value={formData.email} onChange={handleChange} required />
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Role *</label>
-            <select
-              name="role"
-              value={formData.role}
-              onChange={handleChange}
-              required
-            >
-              <option value="recruiter">Recruiter</option>
-              <option value="interviewer">Interviewer</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="form-label">Password *</label>
+                <input type="password" name="password" className="form-input" value={formData.password} onChange={handleChange} required minLength="8" />
+              </div>
+              <div>
+                <label className="form-label">Confirm Password *</label>
+                <input type="password" name="password2" className="form-input" value={formData.password2} onChange={handleChange} required minLength="8" />
+              </div>
+            </div>
 
-          <div className="form-group">
-            <label>Department</label>
-            <input
-              type="text"
-              name="department"
-              value={formData.department}
-              onChange={handleChange}
-              placeholder="e.g., Human Resources"
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="form-label">Role *</label>
+                <select name="role" className="form-input" value={formData.role} onChange={handleChange} required>
+                  <option value="recruiter">Recruiter</option>
+                  <option value="interviewer">Interviewer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div>
+                <label className="form-label">Department</label>
+                <select name="department" className="form-input" value={formData.department} onChange={handleChange}>
+                  <option value="">No department</option>
+                  {departments.map(dept => (
+                    <option key={dept.id} value={String(dept.id)}>{dept.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-          <button type="submit" disabled={loading}>
-            {loading ? 'Creating Account...' : 'Register'}
-          </button>
+            <button type="submit" className="btn-primary w-full py-2.5 mt-2" disabled={loading}>
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </button>
 
-          <div className="login-link">
-            Already have an account? <a href="/login">Login here</a>
-          </div>
-        </form>
+            <p className="text-center text-sm text-gray-500">
+              Already have an account?{' '}
+              <a href="/login" className="text-primary-600 font-medium hover:text-primary-700">Sign in</a>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );

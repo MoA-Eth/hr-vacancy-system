@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { vacancyAPI } from '../api/vacancies';
 import { applicationAPI } from '../api/applications';
-import './Dashboard.css';
 
 function Dashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -66,7 +65,7 @@ function Dashboard() {
         <div className="header-right">
           <div className="user-badge">
             <span className="user-role">{user?.role}</span>
-            {user?.department && <span className="user-dept">{user?.department}</span>}
+            {user?.department_name && <span className="user-dept">{user?.department_name}</span>}
           </div>
           <button onClick={logout} className="logout-btn">
             🚪 Logout

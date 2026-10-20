@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userAPI } from '../api/users';
-import './UserList.css';
+import Layout from './Layout';
 
 function UserList() {
   const [users, setUsers] = useState([]);
@@ -51,79 +51,74 @@ function UserList() {
     }
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
-  if (error) return <div className="error">{error}</div>;
+  const roleBadge = (role) => ({
+    admin:       'badge badge-purple',
+    recruiter:   'badge badge-blue',
+    interviewer: 'badge badge-gray',
+  }[role] || 'badge badge-gray');
+
+  if (loading) return (
+    <Layout>
+      <div className="flex items-center justify-center h-64">
+        <svg className="animate-spin h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      </div>
+    </Layout>
+  );
+  if (error) return <Layout><div className="card p-6 text-red-600">{error}</div></Layout>;
 
   return (
-    <div className="user-list-container">
-      <div className="header">
-        <h1>User Management</h1>
-        <div className="header-actions">
-          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="filter-select">
+    <Layout>
+      <div className="page-header">
+        <h1 className="page-title">User Management</h1>
+        <div className="flex items-center gap-3">
+          <select value={filter} onChange={(e) => setFilter(e.target.value)} className="form-input w-36">
             <option value="all">All Roles</option>
             <option value="admin">Admin</option>
             <option value="recruiter">Recruiter</option>
             <option value="interviewer">Interviewer</option>
           </select>
-          <button onClick={() => navigate('/users/new')} className="btn-primary">
-            + Create User
-          </button>
+          <button onClick={() => navigate('/users/new')} className="btn-primary">+ Create User</button>
         </div>
       </div>
 
       {users.length === 0 ? (
-        <p>No users found.</p>
+        <div className="card p-12 text-center text-gray-500">No users found.</div>
       ) : (
-        <div className="users-table">
-          <table>
-            <thead>
+        <div className="card overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <th>Name</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Department</th>
-                <th>Status</th>
-                <th>Actions</th>
+                {['Name','Username','Email','Role','Department','Status','Actions'].map(h => (
+                  <th key={h} className="table-th">{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.first_name} {user.last_name}</td>
-                  <td>{user.username}</td>
-                  <td>{user.email}</td>
-                  <td>
-                    <span className={`role-badge ${user.role}`}>
-                      {user.role}
+            <tbody className="bg-white divide-y divide-gray-100">
+              {users.map((u) => (
+                <tr key={u.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="table-td font-medium">{u.first_name} {u.last_name}</td>
+                  <td className="table-td text-gray-500">{u.username}</td>
+                  <td className="table-td text-gray-500">{u.email}</td>
+                  <td className="table-td"><span className={roleBadge(u.role)}>{u.role}</span></td>
+                  <td className="table-td text-gray-500">{u.department_name || '—'}</td>
+                  <td className="table-td">
+                    <span className={u.is_active ? 'badge badge-green' : 'badge badge-red'}>
+                      {u.is_active ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td>{user.department || 'N/A'}</td>
-                  <td>
-                    <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
-                      {user.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="action-buttons">
-                      <button 
-                        onClick={() => navigate(`/users/${user.id}`)}
-                        className="btn-view"
+                  <td className="table-td">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => navigate(`/users/${u.id}`)} className="btn-secondary text-xs py-1 px-2">Edit</button>
+                      <button
+                        onClick={() => handleToggleActive(u.id, u.is_active)}
+                        className={u.is_active ? 'btn-ghost text-xs py-1 px-2 text-yellow-600' : 'btn-ghost text-xs py-1 px-2 text-green-600'}
                       >
-                        Edit
+                        {u.is_active ? 'Deactivate' : 'Activate'}
                       </button>
-                      <button 
-                        onClick={() => handleToggleActive(user.id, user.is_active)}
-                        className={user.is_active ? 'btn-deactivate' : 'btn-activate'}
-                      >
-                        {user.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(user.id)}
-                        className="btn-danger"
-                      >
-                        Delete
-                      </button>
+                      <button onClick={() => handleDelete(u.id)} className="btn-danger text-xs py-1 px-2">Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -132,7 +127,7 @@ function UserList() {
           </table>
         </div>
       )}
-    </div>
+    </Layout>
   );
 }
 

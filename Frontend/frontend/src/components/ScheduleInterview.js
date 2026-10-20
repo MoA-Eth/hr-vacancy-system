@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { applicationAPI } from '../api/applications';
 import { interviewAPI } from '../api/interviews';
-import './ScheduleInterview.css';
+import Layout from './Layout';
 
 function ScheduleInterview() {
   const { applicationId } = useParams();
@@ -54,92 +54,71 @@ function ScheduleInterview() {
     }
   };
 
-  if (!application) return <div className="loading">Loading...</div>;
+  if (!application) return (
+    <Layout>
+      <div className="flex items-center justify-center h-64">
+        <svg className="animate-spin h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      </div>
+    </Layout>
+  );
 
   return (
-    <div className="schedule-interview-container">
-      <div className="schedule-header">
-        <button onClick={() => navigate(`/applications/${applicationId}`)} className="btn-back">
-          ← Back to Application
-        </button>
-        <h1>Schedule Interview</h1>
-      </div>
+    <Layout>
+      <div className="max-w-xl mx-auto">
+        <div className="page-header">
+          <h1 className="page-title">Schedule Interview</h1>
+          <button onClick={() => navigate(`/applications/${applicationId}`)} className="btn-secondary">← Back</button>
+        </div>
 
-      <div className="candidate-summary">
-        <h3>Candidate: {application.candidate.full_name}</h3>
-        <p>Position: {application.vacancy.title}</p>
-      </div>
+        <div className="card p-4 mb-5 bg-blue-50 border-blue-200">
+          <p className="text-sm font-medium text-gray-900">{application.candidate.full_name}</p>
+          <p className="text-xs text-gray-500">Applying for: {application.vacancy.title}</p>
+        </div>
 
-      {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit} className="schedule-form">
-        <div className="form-row">
-          <div className="form-group">
-            <label>Interview Date & Time *</label>
-            <input
-              type="datetime-local"
-              name="scheduled_at"
-              value={formData.scheduled_at}
-              onChange={handleChange}
-              required
-            />
+        <form onSubmit={handleSubmit} className="card p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="form-label">Date & Time *</label>
+              <input type="datetime-local" name="scheduled_at" className="form-input" value={formData.scheduled_at} onChange={handleChange} required />
+            </div>
+            <div>
+              <label className="form-label">Round *</label>
+              <input type="number" name="round_number" className="form-input" value={formData.round_number} onChange={handleChange} min="1" required />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label>Round Number *</label>
-            <input
-              type="number"
-              name="round_number"
-              value={formData.round_number}
-              onChange={handleChange}
-              min="1"
-              required
-            />
+          <div>
+            <label className="form-label">Interview Mode *</label>
+            <select name="mode" className="form-input" value={formData.mode} onChange={handleChange} required>
+              <option value="in_person">In Person</option>
+              <option value="video_call">Video Call</option>
+              <option value="phone_call">Phone Call</option>
+            </select>
           </div>
-        </div>
 
-        <div className="form-group">
-          <label>Interview Mode *</label>
-          <select
-            name="mode"
-            value={formData.mode}
-            onChange={handleChange}
-            required
-          >
-            <option value="in_person">In Person</option>
-            <option value="video_call">Video Call</option>
-            <option value="phone_call">Phone Call</option>
-          </select>
-        </div>
+          <div>
+            <label className="form-label">{formData.mode === 'in_person' ? 'Location' : 'Meeting Link'} *</label>
+            <input type="text" name="location_or_link" className="form-input" value={formData.location_or_link} onChange={handleChange} placeholder={formData.mode === 'in_person' ? 'Office address' : 'https://...'} required />
+          </div>
 
-        <div className="form-group">
-          <label>
-            {formData.mode === 'in_person' ? 'Location' : 'Meeting Link'} *
-          </label>
-          <input
-            type="text"
-            name="location_or_link"
-            value={formData.location_or_link}
-            onChange={handleChange}
-            placeholder={formData.mode === 'in_person' ? 'Office address' : 'https://...'}
-            required
-          />
-        </div>
-
-        <div className="form-actions">
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? 'Scheduling...' : 'Schedule Interview'}
-          </button>
-          <button 
-            type="button" 
-            onClick={() => navigate(`/applications/${applicationId}`)}
-            className="btn-secondary"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
+          <div className="flex gap-3 pt-2 border-t border-gray-100">
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Scheduling...' : 'Schedule Interview'}
+            </button>
+            <button type="button" onClick={() => navigate(`/applications/${applicationId}`)} className="btn-secondary">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </Layout>
   );
 }
 

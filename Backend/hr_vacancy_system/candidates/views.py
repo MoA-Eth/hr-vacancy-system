@@ -9,6 +9,7 @@ from .serializers import (
     CandidateSerializer, ApplicationListSerializer, ApplicationDetailSerializer,
     ApplicationCreateSerializer, InterviewSerializer, ApplicationStatusHistorySerializer
 )
+from .email import send_status_change_email, send_interview_scheduled_email
 
 
 class CandidateViewSet(viewsets.ModelViewSet):
@@ -36,7 +37,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing applications
     """
-    queryset = Application.objects.select_related('candidate', 'vacancy').all()
+    queryset = Application.objects.select_related('candidate', 'vacancy', 'vacancy__department').all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'vacancy', 'vacancy__department']
     search_fields = ['candidate__full_name', 'candidate__email', 'vacancy__title']
@@ -60,9 +61,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         if user.role == 'admin':
             return queryset
         
-        # Recruiters see only applications for their department's vacancies
-        if user.role == 'recruiter' and user.department:
-            return queryset.filter(vacancy__department=user.department)
+        # Recruiters see only applications for their department's vacancies (none if unassigned)
+        if user.role == 'recruiter':
+            return queryset.filter(vacancy__department_id=user.department_id)
         
         # Interviewers see all (they need to see applications for interviews)
         return queryset
@@ -145,7 +146,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             changed_by=request.user,
             notes=notes
         )
-        
+
+        # Notify the candidate by email (silently — never crashes the response)
+        send_status_change_email(application, new_status)
+
         return Response({
             'message': f'Status updated from {old_status} to {new_status}',
             'status': new_status
@@ -186,18 +190,19 @@ class InterviewViewSet(viewsets.ModelViewSet):
         if user.role in ['admin', 'interviewer']:
             return queryset
         
-        # Recruiters see only interviews for their department's vacancies
-        if user.role == 'recruiter' and user.department:
-            return queryset.filter(application__vacancy__department=user.department)
+        # Recruiters see only interviews for their department's vacancies (none if unassigned)
+        if user.role == 'recruiter':
+            return queryset.filter(application__vacancy__department_id=user.department_id)
         
         return queryset
     
     def perform_create(self, serializer):
-        """Auto-set the interviewer if not provided"""
+        """Auto-set the interviewer if not provided, then send notification emails"""
         if not serializer.validated_data.get('interviewer'):
-            serializer.save(interviewer=self.request.user)
+            interview = serializer.save(interviewer=self.request.user)
         else:
-            serializer.save()
+            interview = serializer.save()
+        send_interview_scheduled_email(interview)
     
     @action(detail=False, methods=['get'])
     def my_interviews(self, request):

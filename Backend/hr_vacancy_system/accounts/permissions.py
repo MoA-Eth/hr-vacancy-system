@@ -60,7 +60,7 @@ class CanManageVacancy(permissions.BasePermission):
             if request.method in permissions.SAFE_METHODS:
                 return True
             # Write operations only for same department
-            return obj.department == request.user.department
+            return request.user.department_id is not None and obj.department_id == request.user.department_id
         
         return False
 
@@ -82,7 +82,7 @@ class CanManageApplication(permissions.BasePermission):
         
         # Recruiters can manage applications for their department
         if request.user.role == 'recruiter':
-            return obj.vacancy.department == request.user.department
+            return request.user.department_id is not None and obj.vacancy.department_id == request.user.department_id
         
         # Interviewers can view applications (read-only)
         if request.user.role == 'interviewer':

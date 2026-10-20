@@ -174,13 +174,24 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # ---------------------------------------------------------------------------
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
+# Required .env vars:
+#   EMAIL_HOST          — SMTP server (e.g. smtp.gmail.com)
+#   EMAIL_PORT          — SMTP port   (e.g. 587)
+#   EMAIL_HOST_USER     — Sender address / login
+#   EMAIL_HOST_PASSWORD — SMTP password or app password
+#   DEFAULT_FROM_EMAIL  — Display sender (e.g. HR Portal <hr@yourorg.com>)
 # ---------------------------------------------------------------------------
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+EMAIL_BACKEND = config(
+    'EMAIL_BACKEND',
+    default='django.core.mail.backends.console.EmailBackend',
+)
+EMAIL_HOST          = config('EMAIL_HOST',          default='smtp.gmail.com')
+EMAIL_PORT          = config('EMAIL_PORT',          default=587, cast=int)
+EMAIL_USE_TLS       = config('EMAIL_USE_TLS',       default=True, cast=bool)
+EMAIL_HOST_USER     = config('EMAIL_HOST_USER',     default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL',  default='HR Portal <noreply@hrportal.com>')
 
 
 # ---------------------------------------------------------------------------

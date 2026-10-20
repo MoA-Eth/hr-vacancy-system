@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { applicationAPI } from '../api/applications';
 import { AuthContext } from '../context/AuthContext';
-import './ApplicationList.css';
+import Layout from './Layout';
 
 function ApplicationList() {
   const [applications, setApplications] = useState([]);
@@ -180,212 +180,147 @@ function ApplicationList() {
   const stats = getStats();
   const departments = getDepartments();
 
-  if (loading) return <div className="loading">Loading...</div>;
-  if (error) return <div className="error">{error}</div>;
+  const statusBadge = (s) => ({
+    applied:     'badge badge-yellow',
+    shortlisted: 'badge badge-blue',
+    interview:   'badge badge-purple',
+    offer:       'badge badge-green',
+    hired:       'badge badge-green',
+    rejected:    'badge badge-red',
+  }[s] || 'badge badge-gray');
+
+  if (loading) return (
+    <Layout>
+      <div className="flex items-center justify-center h-64">
+        <svg className="animate-spin h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      </div>
+    </Layout>
+  );
+  if (error) return <Layout><div className="card p-6 text-red-600">{error}</div></Layout>;
 
   return (
-    <div className="application-list-container">
+    <Layout>
       {/* Header */}
       <div className="page-header">
         <div>
-          <h1>Job Applications</h1>
-          <p className="subtitle">Manage and review all candidate applications</p>
+          <h1 className="page-title">Applications</h1>
+          <p className="text-sm text-gray-500">Manage and review all candidate applications</p>
         </div>
-        <button onClick={() => navigate('/dashboard')} className="btn-back">
-          ← Back to Dashboard
+        <button onClick={exportToCSV} className="btn-secondary" disabled={filteredApplications.length === 0}>
+          Export CSV
         </button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="stats-grid">
-        <div className="stat-card stat-blue">
-          <div className="stat-icon">📋</div>
-          <div className="stat-info">
-            <span className="stat-value">{stats.total}</span>
-            <span className="stat-label">Total Applications</span>
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+        {[
+          { label: 'Total',      value: stats.total,     color: 'text-primary-600' },
+          { label: 'Pending',    value: stats.pending,   color: 'text-yellow-600' },
+          { label: 'Interview',  value: stats.interview, color: 'text-purple-600' },
+          { label: 'Hired',      value: stats.hired,     color: 'text-green-600' },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="card p-4">
+            <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide">{label}</p>
+            <p className={`text-3xl font-bold mt-1 ${color}`}>{value}</p>
           </div>
-        </div>
-        <div className="stat-card stat-orange">
-          <div className="stat-icon">⏳</div>
-          <div className="stat-info">
-            <span className="stat-value">{stats.pending}</span>
-            <span className="stat-label">Pending Review</span>
-          </div>
-        </div>
-        <div className="stat-card stat-purple">
-          <div className="stat-icon">💼</div>
-          <div className="stat-info">
-            <span className="stat-value">{stats.interview}</span>
-            <span className="stat-label">In Interview</span>
-          </div>
-        </div>
-        <div className="stat-card stat-green">
-          <div className="stat-icon">✅</div>
-          <div className="stat-info">
-            <span className="stat-value">{stats.hired}</span>
-            <span className="stat-label">Hired</span>
-          </div>
-        </div>
+        ))}
       </div>
 
+      {/* Filters */}
       {applications.length > 0 && (
-        <>
-          {/* Filters Section */}
-          <div className="filters-panel">
-            <div className="filters-row">
-              <input
-                type="text"
-                placeholder="🔍 Search by name, email, vacancy, or reference..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="search-input"
-              />
-              <select 
-                value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="all">All Status</option>
-                <option value="applied">Applied</option>
-                <option value="shortlisted">Shortlisted</option>
-                <option value="interview">Interview</option>
-                <option value="offer">Offer</option>
-                <option value="hired">Hired</option>
-                <option value="rejected">Rejected</option>
-              </select>
-              <select 
-                value={departmentFilter} 
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="filter-select"
-              >
-                <option value="all">All Departments</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
+        <div className="card p-4 mb-5 space-y-3">
+          <div className="flex flex-wrap gap-3">
+            <div className="relative flex-1 min-w-48">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input type="text" placeholder="Search name, email, vacancy..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="form-input pl-9" />
             </div>
-            <div className="filters-row">
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
-                className="date-input"
-                placeholder="From Date"
-              />
-              <input
-                type="date"
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
-                className="date-input"
-                placeholder="To Date"
-              />
-              <select 
-                value={sortBy} 
-                onChange={(e) => setSortBy(e.target.value)}
-                className="filter-select"
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="name-asc">Name A-Z</option>
-                <option value="name-desc">Name Z-A</option>
-              </select>
-              <button onClick={clearFilters} className="btn-clear">
-                Clear Filters
-              </button>
-            </div>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="form-input w-36">
+              <option value="all">All Status</option>
+              <option value="applied">Applied</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="interview">Interview</option>
+              <option value="offer">Offer</option>
+              <option value="hired">Hired</option>
+              <option value="rejected">Rejected</option>
+            </select>
+            <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="form-input w-44">
+              <option value="all">All Departments</option>
+              {departments.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
           </div>
-
-          {/* Toolbar */}
-          <div className="toolbar">
-            <div className="view-toggle">
-              <button 
-                className={viewMode === 'table' ? 'active' : ''}
-                onClick={() => setViewMode('table')}
-              >
-                📊 Table
-              </button>
-              <button 
-                className={viewMode === 'cards' ? 'active' : ''}
-                onClick={() => setViewMode('cards')}
-              >
-                🎴 Cards
-              </button>
+          <div className="flex flex-wrap gap-3 items-center">
+            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="form-input w-36" />
+            <span className="text-xs text-gray-400">to</span>
+            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="form-input w-36" />
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="form-input w-36">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="name-asc">Name A-Z</option>
+              <option value="name-desc">Name Z-A</option>
+            </select>
+            <button onClick={clearFilters} className="btn-ghost text-xs">Clear filters</button>
+            <div className="ml-auto flex gap-1 bg-gray-100 p-1 rounded-lg">
+              {[['table','Table'],['cards','Cards']].map(([key,label]) => (
+                <button key={key} onClick={() => setViewMode(key)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                    viewMode === key ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'
+                  }`}>{label}</button>
+              ))}
             </div>
-            <span className="results-count">
-              Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredApplications.length)} of {filteredApplications.length}
-            </span>
-            <button onClick={exportToCSV} className="btn-export" disabled={filteredApplications.length === 0}>
-              📥 Export CSV
-            </button>
+            <span className="text-xs text-gray-500">{filteredApplications.length} results</span>
           </div>
-        </>
+        </div>
       )}
 
       {applications.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📭</div>
-          <h3>No Applications Yet</h3>
-          <p>Applications will appear here once candidates start applying to your job postings.</p>
+        <div className="card p-16 text-center">
+          <p className="text-3xl mb-3">📭</p>
+          <p className="font-medium text-gray-700">No Applications Yet</p>
+          <p className="text-sm text-gray-400 mt-1">Applications will appear here once candidates start applying.</p>
         </div>
       ) : filteredApplications.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">🔍</div>
-          <h3>No Results Found</h3>
-          <p>Try adjusting your filters or search terms.</p>
-          <button onClick={clearFilters} className="btn-clear">Clear All Filters</button>
+        <div className="card p-12 text-center">
+          <p className="text-sm text-gray-500 mb-3">No results match your filters.</p>
+          <button onClick={clearFilters} className="btn-secondary">Clear filters</button>
         </div>
       ) : (
         <>
-          {/* Table View */}
-          {viewMode === 'table' && (
-            <div className="applications-table">
-              <table>
-                <thead>
+          {viewMode === 'table' ? (
+            <div className="card overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th>Candidate</th>
-                    <th>Email</th>
-                    <th>Vacancy</th>
-                    <th>Department</th>
-                    <th>Applied Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    {['Candidate','Email','Vacancy','Department','Date','Status','Actions'].map(h => (
+                      <th key={h} className="table-th">{h}</th>
+                    ))}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100 bg-white">
                   {currentItems.map((app) => (
-                    <tr key={app.id}>
-                      <td>
-                        <div className="candidate-cell">
-                          <div className="avatar">{getInitials(app.candidate_name)}</div>
-                          <span>{app.candidate_name}</span>
+                    <tr key={app.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="table-td">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-primary-100 flex items-center justify-center text-xs font-bold text-primary-700 flex-shrink-0">
+                            {getInitials(app.candidate_name)}
+                          </div>
+                          <span className="font-medium text-gray-900">{app.candidate_name}</span>
                         </div>
                       </td>
-                      <td>{app.candidate_email}</td>
-                      <td>{app.vacancy_title}</td>
-                      <td>{app.vacancy_department}</td>
-                      <td>{new Date(app.applied_at).toLocaleDateString()}</td>
-                      <td>
-                        <span 
-                          className="status-badge" 
-                          style={{ backgroundColor: getStatusColor(app.status) }}
-                        >
-                          {app.status}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button 
-                            onClick={() => navigate(`/applications/${app.id}`)}
-                            className="btn-view"
-                          >
-                            View
-                          </button>
+                      <td className="table-td text-gray-500">{app.candidate_email}</td>
+                      <td className="table-td">{app.vacancy_title}</td>
+                      <td className="table-td text-gray-500">{app.vacancy_department}</td>
+                      <td className="table-td text-gray-500">{new Date(app.applied_at).toLocaleDateString()}</td>
+                      <td className="table-td"><span className={statusBadge(app.status)}>{app.status}</span></td>
+                      <td className="table-td">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => navigate(`/applications/${app.id}`)} className="btn-secondary text-xs py-1 px-2">View</button>
                           {user?.role !== 'interviewer' && (
-                            <select
-                              value={app.status}
-                              onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                              className="status-select"
-                            >
+                            <select value={app.status} onChange={(e) => handleStatusChange(app.id, e.target.value)} className="form-input text-xs py-1 w-28">
                               <option value="applied">Applied</option>
                               <option value="shortlisted">Shortlisted</option>
                               <option value="interview">Interview</option>
@@ -401,57 +336,30 @@ function ApplicationList() {
                 </tbody>
               </table>
             </div>
-          )}
-
-          {/* Card View */}
-          {viewMode === 'cards' && (
-            <div className="applications-grid">
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {currentItems.map((app) => (
-                <div key={app.id} className="application-card">
-                  <div className="card-header">
-                    <div className="avatar-large">{getInitials(app.candidate_name)}</div>
-                    <div className="card-info">
-                      <h3>{app.candidate_name}</h3>
-                      <p>{app.candidate_email}</p>
+                <div key={app.id} className="card p-5 flex flex-col gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-sm font-bold text-primary-700 flex-shrink-0">
+                      {getInitials(app.candidate_name)}
                     </div>
-                    <span 
-                      className="status-badge" 
-                      style={{ backgroundColor: getStatusColor(app.status) }}
-                    >
-                      {app.status}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{app.candidate_name}</p>
+                      <p className="text-xs text-gray-500 truncate">{app.candidate_email}</p>
+                    </div>
+                    <span className={statusBadge(app.status)}>{app.status}</span>
                   </div>
-                  <div className="card-body">
-                    <div className="card-detail">
-                      <span className="label">Vacancy:</span>
-                      <span>{app.vacancy_title}</span>
-                    </div>
-                    <div className="card-detail">
-                      <span className="label">Department:</span>
-                      <span>{app.vacancy_department}</span>
-                    </div>
-                    <div className="card-detail">
-                      <span className="label">Applied:</span>
-                      <span>{new Date(app.applied_at).toLocaleDateString()}</span>
-                    </div>
-                    <div className="card-detail">
-                      <span className="label">Reference:</span>
-                      <span>{app.reference_code}</span>
-                    </div>
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <p><span className="font-medium text-gray-700">Vacancy:</span> {app.vacancy_title}</p>
+                    <p><span className="font-medium text-gray-700">Dept:</span> {app.vacancy_department}</p>
+                    <p><span className="font-medium text-gray-700">Applied:</span> {new Date(app.applied_at).toLocaleDateString()}</p>
+                    <p><span className="font-medium text-gray-700">Ref:</span> {app.reference_code}</p>
                   </div>
-                  <div className="card-footer">
-                    <button 
-                      onClick={() => navigate(`/applications/${app.id}`)}
-                      className="btn-view-full"
-                    >
-                      View Details
-                    </button>
+                  <div className="flex gap-2 mt-auto pt-2 border-t border-gray-100">
+                    <button onClick={() => navigate(`/applications/${app.id}`)} className="btn-secondary flex-1">View Details</button>
                     {user?.role !== 'interviewer' && (
-                      <select
-                        value={app.status}
-                        onChange={(e) => handleStatusChange(app.id, e.target.value)}
-                        className="status-select"
-                      >
+                      <select value={app.status} onChange={(e) => handleStatusChange(app.id, e.target.value)} className="form-input text-xs w-28">
                         <option value="applied">Applied</option>
                         <option value="shortlisted">Shortlisted</option>
                         <option value="interview">Interview</option>
@@ -468,60 +376,27 @@ function ApplicationList() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="pagination">
-              <div className="pagination-info">
-                <select 
-                  value={itemsPerPage} 
-                  onChange={(e) => {
-                    setItemsPerPage(Number(e.target.value));
-                    setCurrentPage(1);
-                  }}
-                  className="items-per-page"
-                >
-                  <option value="10">10 per page</option>
-                  <option value="25">25 per page</option>
-                  <option value="50">50 per page</option>
-                  <option value="100">100 per page</option>
+            <div className="flex items-center justify-between mt-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">Rows per page:</span>
+                <select value={itemsPerPage} onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }} className="form-input w-20 text-xs">
+                  <option value="10">10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
                 </select>
               </div>
-              <div className="pagination-controls">
-                <button 
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                  className="page-btn"
-                >
-                  ««
-                </button>
-                <button 
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                  className="page-btn"
-                >
-                  ‹
-                </button>
-                <span className="page-info">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button 
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                  className="page-btn"
-                >
-                  ›
-                </button>
-                <button 
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
-                  className="page-btn"
-                >
-                  »»
-                </button>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="btn-ghost py-1 px-2 disabled:opacity-40">«</button>
+                <button onClick={() => setCurrentPage(p => Math.max(p-1,1))} disabled={currentPage === 1} className="btn-ghost py-1 px-2 disabled:opacity-40">‹</button>
+                <span className="text-sm text-gray-600 px-2">Page {currentPage} / {totalPages}</span>
+                <button onClick={() => setCurrentPage(p => Math.min(p+1,totalPages))} disabled={currentPage === totalPages} className="btn-ghost py-1 px-2 disabled:opacity-40">›</button>
+                <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="btn-ghost py-1 px-2 disabled:opacity-40">»</button>
               </div>
             </div>
           )}
         </>
       )}
-    </div>
+    </Layout>
   );
 }
 

@@ -3,6 +3,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from .models import Department
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
@@ -19,6 +20,20 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
         
 User = get_user_model()
+
+
+class DepartmentSerializer(serializers.ModelSerializer):
+    """Serializer for departments"""
+    user_count = serializers.IntegerField(source='users.count', read_only=True)
+    vacancy_count = serializers.IntegerField(source='vacancies.count', read_only=True)
+
+    class Meta:
+        model = Department
+        fields = [
+            'id', 'name', 'code', 'description', 'is_active',
+            'user_count', 'vacancy_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -48,7 +63,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             first_name=validated_data['first_name'],
             last_name=validated_data['last_name'],
             role=validated_data.get('role', 'recruiter'),
-            department=validated_data.get('department', '')
+            department=validated_data.get('department')
         )
         user.set_password(validated_data['password'])
         user.save()
@@ -57,10 +72,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for user profile"""
+    department_name = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'department']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 'department', 'department_name', 'is_active']
         read_only_fields = ['id']
+
+    def get_department_name(self, obj):
+        return obj.department.name if obj.department else None
+
+
+class ProfileSerializer(UserSerializer):
+    """Self-service profile serializer: users cannot change their own role or department"""
+    class Meta(UserSerializer.Meta):
+        read_only_fields = ['id', 'role', 'department']
 
 
 class ChangePasswordSerializer(serializers.Serializer):

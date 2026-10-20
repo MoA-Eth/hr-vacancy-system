@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { vacancyAPI } from '../api/vacancies';
 import Header from './Header';
-import './PublicJobDetail.css';
 
 function PublicJobDetail() {
   const { id } = useParams();
@@ -39,15 +38,21 @@ function PublicJobDetail() {
     if (max) return `Up to $${max.toLocaleString()}`;
   };
 
-  if (loading) return <div className="loading">Loading job details...</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50"><Header />
+      <div className="flex items-center justify-center h-64">
+        <svg className="animate-spin h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      </div>
+    </div>
+  );
   if (error) return (
-    <div className="error-container">
-      <Header />
-      <div className="error-message">
-        <h2>{error}</h2>
-        <button onClick={() => navigate('/jobs')} className="btn-back">
-          ← Back to Jobs
-        </button>
+    <div className="min-h-screen bg-gray-50"><Header />
+      <div className="max-w-3xl mx-auto px-6 py-12 text-center">
+        <p className="text-gray-600 mb-4">{error}</p>
+        <button onClick={() => navigate('/jobs')} className="btn-secondary">← Back to Jobs</button>
       </div>
     </div>
   );
@@ -57,203 +62,139 @@ function PublicJobDetail() {
   const daysRemaining = Math.ceil((new Date(vacancy.deadline) - new Date()) / (1000 * 60 * 60 * 24));
 
   return (
-    <div className="public-job-detail-container">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      
-      <div className="job-detail-content">
-        {/* Back Button */}
-        <button onClick={() => navigate('/jobs')} className="btn-back-simple">
-          ← Back to All Jobs
-        </button>
 
-        {/* Job Header */}
-        <div className="job-header-section">
-          <div className="job-header-left">
-            <h1 className="job-title">{vacancy.title}</h1>
-            <div className="job-meta-info">
-              <span className="meta-item">
-                <span className="meta-icon">🏢</span>
-                {vacancy.department}
-              </span>
-              <span className="meta-item">
-                <span className="meta-icon">📍</span>
-                {vacancy.location}
-              </span>
-              <span className="meta-item">
-                <span className="meta-icon">💼</span>
-                {formatLabel(vacancy.employment_type)}
-              </span>
-              {vacancy.workplace_type && (
-                <span className="meta-item">
-                  <span className="meta-icon">🏠</span>
-                  {formatLabel(vacancy.workplace_type)}
-                </span>
-              )}
-            </div>
-            <div className="job-tags-detail">
-              {vacancy.experience_level && (
-                <span className="tag-detail tag-experience">
-                  {formatLabel(vacancy.experience_level)}
-                </span>
-              )}
-              {vacancy.category && (
-                <span className="tag-detail tag-category">
-                  {formatLabel(vacancy.category)}
-                </span>
-              )}
-              <span className="tag-detail tag-positions">
-                {vacancy.positions_available} Position{vacancy.positions_available > 1 ? 's' : ''} Available
-              </span>
-            </div>
-          </div>
-
-          <div className="job-header-right">
-            <div className="salary-box">
-              <span className="salary-label">Salary Range</span>
-              <span className="salary-amount">
-                {formatSalary(vacancy.min_salary, vacancy.max_salary)}
-              </span>
-            </div>
-            <div className={`deadline-box ${isDeadlinePassed ? 'expired' : daysRemaining <= 3 ? 'urgent' : ''}`}>
-              {isDeadlinePassed ? (
-                <>
-                  <span className="deadline-icon">🚫</span>
-                  <div>
-                    <span className="deadline-label">Deadline Passed</span>
-                    <span className="deadline-date">{new Date(vacancy.deadline).toLocaleDateString()}</span>
-                  </div>
-                </>
-              ) : daysRemaining <= 3 ? (
-                <>
-                  <span className="deadline-icon">⚠️</span>
-                  <div>
-                    <span className="deadline-label">Closing Soon</span>
-                    <span className="deadline-date">{daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left</span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <span className="deadline-icon">⏰</span>
-                  <div>
-                    <span className="deadline-label">Apply Before</span>
-                    <span className="deadline-date">{new Date(vacancy.deadline).toLocaleDateString()}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Apply Button Section */}
-        <div className="apply-section">
-          {isDeadlinePassed ? (
-            <button className="btn-apply-large disabled" disabled>
-              Application Closed
-            </button>
-          ) : (
-            <button 
-              onClick={() => navigate(`/apply/${vacancy.id}`)}
-              className="btn-apply-large"
-            >
-              Apply for this Position →
-            </button>
-          )}
-        </div>
-
-        {/* Job Details */}
-        <div className="job-details-grid">
-          {/* Description */}
-          {vacancy.description && (
-            <div className="detail-card">
-              <h2 className="detail-title">
-                <span className="title-icon">📋</span>
-                Job Description
-              </h2>
-              <div className="detail-content">
-                <p className="detail-text">{vacancy.description}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Requirements */}
-          {vacancy.requirements && (
-            <div className="detail-card">
-              <h2 className="detail-title">
-                <span className="title-icon">✅</span>
-                Requirements
-              </h2>
-              <div className="detail-content">
-                <p className="detail-text whitespace-pre-line">{vacancy.requirements}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Responsibilities */}
-          {vacancy.responsibilities && (
-            <div className="detail-card">
-              <h2 className="detail-title">
-                <span className="title-icon">💡</span>
-                Responsibilities
-              </h2>
-              <div className="detail-content">
-                <p className="detail-text whitespace-pre-line">{vacancy.responsibilities}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Additional Information */}
-          <div className="detail-card">
-            <h2 className="detail-title">
-              <span className="title-icon">ℹ️</span>
-              Additional Information
-            </h2>
-            <div className="detail-content">
-              <div className="info-grid">
-                <div className="info-item">
-                  <span className="info-label">Posted On:</span>
-                  <span className="info-value">{new Date(vacancy.created_at).toLocaleDateString()}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-label">Employment Type:</span>
-                  <span className="info-value">{formatLabel(vacancy.employment_type)}</span>
-                </div>
-                {vacancy.workplace_type && (
-                  <div className="info-item">
-                    <span className="info-label">Work Mode:</span>
-                    <span className="info-value">{formatLabel(vacancy.workplace_type)}</span>
-                  </div>
-                )}
-                {vacancy.experience_level && (
-                  <div className="info-item">
-                    <span className="info-label">Experience Level:</span>
-                    <span className="info-value">{formatLabel(vacancy.experience_level)}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Apply Section */}
-        <div className="apply-section-bottom">
-          <div className="apply-cta">
-            <h3>Interested in this position?</h3>
-            <p>Submit your application now and join our team!</p>
-            {isDeadlinePassed ? (
-              <button className="btn-apply-large disabled" disabled>
-                Application Closed
-              </button>
-            ) : (
-              <button 
-                onClick={() => navigate(`/apply/${vacancy.id}`)}
-                className="btn-apply-large"
-              >
-                Apply Now →
-              </button>
-            )}
+      {/* Hero banner */}
+      <div className="bg-primary-600 text-white py-10 px-6">
+        <div className="max-w-5xl mx-auto">
+          <button onClick={() => navigate('/jobs')} className="flex items-center gap-1 text-primary-100 hover:text-white text-sm mb-5 transition-colors">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            All Jobs
+          </button>
+          <h1 className="text-2xl font-bold mb-1">{vacancy.title}</h1>
+          <div className="flex flex-wrap gap-x-5 gap-y-1 text-primary-100 text-sm mt-2">
+            <span>{vacancy.department_name}</span>
+            <span>{vacancy.location}</span>
+            <span>{formatLabel(vacancy.employment_type)}</span>
+            {vacancy.workplace_type && <span>{formatLabel(vacancy.workplace_type)}</span>}
           </div>
         </div>
       </div>
+
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="flex gap-7 items-start">
+
+          {/* Main content */}
+          <div className="flex-1 min-w-0 space-y-5">
+
+            {/* Quick info bar */}
+            <div className="card p-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center divide-x divide-gray-100">
+                {[
+                  { label: 'Salary', value: formatSalary(vacancy.min_salary, vacancy.max_salary) },
+                  { label: 'Experience', value: formatLabel(vacancy.experience_level) || '—' },
+                  { label: 'Positions', value: `${vacancy.positions_available} open` },
+                  { label: 'Posted', value: new Date(vacancy.created_at).toLocaleDateString() },
+                ].map(({ label, value }) => (
+                  <div key={label} className="px-2">
+                    <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                    <p className="text-sm font-semibold text-gray-800">{value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {vacancy.description && (
+              <div className="card p-6">
+                <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <span className="w-1 h-4 bg-primary-600 rounded-full inline-block"></span>
+                  Job Description
+                </h2>
+                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{vacancy.description}</p>
+              </div>
+            )}
+
+            {vacancy.responsibilities && (
+              <div className="card p-6">
+                <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <span className="w-1 h-4 bg-primary-600 rounded-full inline-block"></span>
+                  Responsibilities
+                </h2>
+                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{vacancy.responsibilities}</p>
+              </div>
+            )}
+
+            {vacancy.requirements && (
+              <div className="card p-6">
+                <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <span className="w-1 h-4 bg-primary-600 rounded-full inline-block"></span>
+                  Requirements
+                </h2>
+                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{vacancy.requirements}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Sticky sidebar */}
+          <div className="w-64 flex-shrink-0 sticky top-20 space-y-4">
+            <div className="card p-5">
+              {/* Deadline */}
+              <div className={`text-center mb-4 pb-4 border-b border-gray-100`}>
+                {isDeadlinePassed ? (
+                  <span className="badge badge-red text-sm px-3 py-1">Application Closed</span>
+                ) : daysRemaining <= 3 ? (
+                  <div>
+                    <span className="badge badge-yellow text-sm px-3 py-1">⚠ Closing Soon</span>
+                    <p className="text-xs text-gray-400 mt-1">{daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-xs text-gray-400">Deadline</p>
+                    <p className="font-semibold text-gray-800">{new Date(vacancy.deadline).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => navigate(`/apply/${vacancy.id}`)}
+                disabled={isDeadlinePassed}
+                className="btn-primary w-full justify-center disabled:opacity-50"
+              >
+                {isDeadlinePassed ? 'Application Closed' : 'Apply Now →'}
+              </button>
+
+              {!isDeadlinePassed && (
+                <p className="text-xs text-center text-gray-400 mt-2">Takes about 5–10 minutes</p>
+              )}
+            </div>
+
+            {/* Tags */}
+            <div className="card p-4 space-y-2">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Details</p>
+              {[
+                { label: 'Department', value: vacancy.department_name },
+                { label: 'Location', value: vacancy.location },
+                { label: 'Type', value: formatLabel(vacancy.employment_type) },
+                vacancy.workplace_type && { label: 'Work Mode', value: formatLabel(vacancy.workplace_type) },
+                vacancy.experience_level && { label: 'Experience', value: formatLabel(vacancy.experience_level) },
+                vacancy.category && { label: 'Category', value: formatLabel(vacancy.category) },
+              ].filter(Boolean).map(({ label, value }) => (
+                <div key={label} className="flex justify-between text-xs">
+                  <span className="text-gray-400">{label}</span>
+                  <span className="text-gray-700 font-medium text-right">{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 mt-12 py-6 text-center text-xs text-gray-400">
+        &copy; {new Date().getFullYear()} HR Portal. All rights reserved.
+      </footer>
     </div>
   );
 }

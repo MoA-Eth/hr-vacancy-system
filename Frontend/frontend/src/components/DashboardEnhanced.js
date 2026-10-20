@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { vacancyAPI } from '../api/vacancies';
 import { applicationAPI } from '../api/applications';
 import { userAPI } from '../api/users';
-import './DashboardEnhanced.css';
+import Layout from './Layout';
 
 function DashboardEnhanced() {
   const { user, logout } = useContext(AuthContext);
@@ -62,10 +62,9 @@ function DashboardEnhanced() {
         interviewers: users.filter(u => u.role === 'interviewer').length
       } : { total: 0, admins: 0, recruiters: 0, interviewers: 0 };
 
-      // Get recent applications (last 8)
-      const recentApplications = applications
-        .sort((a, b) => new Date(b.applied_at) - new Date(a.applied_at))
-        .slice(0, 8);
+      // Applications sorted newest first (filtered by date range in the Activity tab)
+      const recentApplications = [...applications]
+        .sort((a, b) => new Date(b.applied_at) - new Date(a.applied_at));
 
       // Get urgent vacancies (deadline within 7 days)
       const today = new Date();
@@ -136,251 +135,217 @@ function DashboardEnhanced() {
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading dashboard...</p>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center h-64">
+          <div className="flex items-center gap-3 text-gray-500">
+            <svg className="animate-spin h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+            <span className="text-sm font-medium">Loading dashboard...</span>
+          </div>
+        </div>
+      </Layout>
     );
   }
 
   const trend = calculateTrend();
 
+  const rangeStart = new Date();
+  if (dateRange === 'today') {
+    rangeStart.setHours(0, 0, 0, 0);
+  } else if (dateRange === 'week') {
+    rangeStart.setDate(rangeStart.getDate() - 7);
+  } else {
+    rangeStart.setMonth(rangeStart.getMonth() - 1);
+  }
+  const activityApplications = stats.recentApplications
+    .filter(app => new Date(app.applied_at) >= rangeStart)
+    .slice(0, 20);
+
+  const statusBadge = (status) => {
+    const map = {
+      pending:     'badge badge-yellow',
+      reviewing:   'badge badge-blue',
+      shortlisted: 'badge badge-purple',
+      accepted:    'badge badge-green',
+      rejected:    'badge badge-red',
+    };
+    return map[status] || 'badge badge-gray';
+  };
+
   return (
-    <div className="dashboard-enhanced">
-      {/* Header with User Info */}
-      <div className="dashboard-header">
-        <div className="header-left">
-          <div className="user-avatar-large">{user?.username?.charAt(0).toUpperCase()}</div>
-          <div className="header-info">
-            <h1>Welcome back, {user?.username}!</h1>
-            <p className="header-subtitle">
-              <span className="role-badge-header">{user?.role}</span>
-              {user?.department && <span className="department-badge">{user?.department}</span>}
-            </p>
-            {user?.role === 'recruiter' && user?.department && (
-              <p className="department-notice">
-                📌 Viewing {user.department} department data only
-              </p>
+    <Layout>
+      {/* Welcome header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center">
+            <span className="text-xl font-bold text-primary-700">{user?.username?.charAt(0).toUpperCase()}</span>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Welcome back, {user?.username}!</h1>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="badge badge-blue capitalize">{user?.role}</span>
+              {user?.department_name && <span className="badge badge-gray">{user.department_name}</span>}
+            </div>
+            {user?.role === 'recruiter' && user?.department_name && (
+              <p className="text-xs text-amber-600 mt-1">📌 Viewing {user.department_name} department data only</p>
             )}
           </div>
         </div>
-        <div className="header-right">
-          <button className="btn-refresh" onClick={fetchDashboardStats} title="Refresh Data">
-            🔄
-          </button>
-          <button onClick={logout} className="btn-logout">Logout</button>
-        </div>
+        <button onClick={fetchDashboardStats} className="btn-ghost" title="Refresh">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
       </div>
 
       {/* Tab Navigation */}
-      <div className="tab-navigation">
-        <button 
-          className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-          onClick={() => setActiveTab('overview')}
-        >
-          📊 Overview
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
-        >
-          📈 Analytics
-        </button>
-        <button 
-          className={`tab-btn ${activeTab === 'activity' ? 'active' : ''}`}
-          onClick={() => setActiveTab('activity')}
-        >
-          🕐 Activity
-        </button>
+      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+        {[['overview','Overview'],['analytics','Analytics'],['activity','Activity']].map(([key,label]) => (
+          <button
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              activeTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Overview Tab */}
       {activeTab === 'overview' && (
         <>
-          {/* Key Metrics Cards */}
-          <div className="metrics-grid">
-            <div className="metric-card primary">
-              <div className="metric-header">
-                <span className="metric-icon">📋</span>
-                <span className="metric-label">Total Vacancies</span>
-              </div>
-              <div className="metric-value">{stats.vacancies.total}</div>
-              <div className="metric-details">
-                <div className="detail-item success">
-                  <span className="dot"></span>
-                  {stats.vacancies.open} Open
-                </div>
-                <div className="detail-item info">
-                  <span className="dot"></span>
-                  {stats.vacancies.filled} Filled
-                </div>
+          {/* Stat cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="card p-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Vacancies</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.vacancies.total}</p>
+              <div className="flex gap-3 mt-2">
+                <span className="text-xs text-green-600 font-medium">{stats.vacancies.open} open</span>
+                <span className="text-xs text-blue-600 font-medium">{stats.vacancies.filled} filled</span>
               </div>
             </div>
-
-            <div className="metric-card secondary">
-              <div className="metric-header">
-                <span className="metric-icon">📝</span>
-                <span className="metric-label">Applications</span>
-              </div>
-              <div className="metric-value">{stats.applications.total}</div>
-              <div className="metric-trend">
-                <span className={`trend-indicator ${trend.direction}`}>
+            <div className="card p-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Applications</p>
+              <p className="text-3xl font-bold text-gray-900 mt-1">{stats.applications.total}</p>
+              <p className="text-xs mt-2">
+                <span className={trend.direction === 'up' ? 'text-green-600' : 'text-red-600'} style={{fontWeight:500}}>
                   {trend.direction === 'up' ? '↑' : '↓'} {trend.percentage}%
                 </span>
-                <span className="trend-label">vs last week</span>
-              </div>
+                <span className="text-gray-400"> vs last week</span>
+              </p>
             </div>
-
-            <div className="metric-card warning">
-              <div className="metric-header">
-                <span className="metric-icon">⏰</span>
-                <span className="metric-label">Urgent Vacancies</span>
-              </div>
-              <div className="metric-value">{stats.urgentVacancies.length}</div>
-              <div className="metric-details">
-                <span className="detail-text">Closing within 7 days</span>
-              </div>
+            <div className="card p-5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Urgent</p>
+              <p className="text-3xl font-bold text-red-600 mt-1">{stats.urgentVacancies.length}</p>
+              <p className="text-xs text-gray-400 mt-2">Closing within 7 days</p>
             </div>
-
             {user?.role === 'admin' && (
-              <div className="metric-card accent">
-                <div className="metric-header">
-                  <span className="metric-icon">👥</span>
-                  <span className="metric-label">Team Members</span>
-                </div>
-                <div className="metric-value">{stats.users.total}</div>
-                <div className="metric-details">
-                  <div className="detail-item">
-                    <span className="dot"></span>
-                    {stats.users.recruiters} Recruiters
-                  </div>
-                </div>
+              <div className="card p-5">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Team</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">{stats.users.total}</p>
+                <p className="text-xs text-gray-400 mt-2">{stats.users.recruiters} recruiters</p>
               </div>
             )}
           </div>
 
-          {/* Main Content Grid */}
-          <div className="dashboard-grid">
-            {/* Left Column */}
-            <div className="dashboard-left">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left */}
+            <div className="space-y-5">
               {/* Quick Actions */}
-              <div className="section-card">
-                <h2 className="section-title">Quick Actions</h2>
-                <div className="quick-actions">
-                  <button className="action-btn primary" onClick={() => navigate('/vacancies/create')}>
-                    <span className="action-btn-icon">➕</span>
-                    <span>Create Vacancy</span>
-                  </button>
-                  <button className="action-btn secondary" onClick={() => navigate('/vacancies')}>
-                    <span className="action-btn-icon">📋</span>
-                    <span>Manage Vacancies</span>
-                  </button>
-                  <button className="action-btn tertiary" onClick={() => navigate('/applications')}>
-                    <span className="action-btn-icon">📝</span>
-                    <span>View Applications</span>
-                  </button>
+              <div className="card p-5">
+                <h2 className="text-sm font-semibold text-gray-700 mb-3">Quick Actions</h2>
+                <div className="grid grid-cols-2 gap-2">
+                  {(user?.role === 'admin' || user?.role === 'recruiter') && (
+                    <button className="btn-primary justify-start gap-2" onClick={() => navigate('/vacancies/new')}>+ New Vacancy</button>
+                  )}
+                  <button className="btn-secondary justify-start gap-2" onClick={() => navigate('/vacancies')}>Vacancies</button>
+                  <button className="btn-secondary justify-start gap-2" onClick={() => navigate('/applications')}>Applications</button>
                   {user?.role === 'admin' && (
-                    <button className="action-btn accent" onClick={() => navigate('/users')}>
-                      <span className="action-btn-icon">👥</span>
-                      <span>User Management</span>
-                    </button>
+                    <button className="btn-secondary justify-start gap-2" onClick={() => navigate('/users')}>Users</button>
                   )}
                 </div>
               </div>
 
-              {/* Application Status Breakdown */}
-              <div className="section-card">
-                <h2 className="section-title">Application Pipeline</h2>
-                <div className="pipeline-chart">
-                  <div className="pipeline-item">
-                    <div className="pipeline-bar pending" style={{width: `${calculatePercentage(stats.applications.pending, stats.applications.total)}%`}}></div>
-                    <div className="pipeline-label">
-                      <span>Pending</span>
-                      <strong>{stats.applications.pending}</strong>
+              {/* Pipeline */}
+              <div className="card p-5">
+                <h2 className="text-sm font-semibold text-gray-700 mb-4">Application Pipeline</h2>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Pending',     count: stats.applications.pending,     color: 'bg-yellow-400' },
+                    { label: 'Reviewing',   count: stats.applications.reviewing,   color: 'bg-blue-400' },
+                    { label: 'Shortlisted', count: stats.applications.shortlisted, color: 'bg-purple-400' },
+                    { label: 'Accepted',    count: stats.applications.accepted,    color: 'bg-green-400' },
+                  ].map(({ label, count, color }) => (
+                    <div key={label}>
+                      <div className="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>{label}</span><strong>{count}</strong>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${color} transition-all`}
+                          style={{ width: `${calculatePercentage(count, stats.applications.total)}%` }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="pipeline-item">
-                    <div className="pipeline-bar reviewing" style={{width: `${calculatePercentage(stats.applications.reviewing, stats.applications.total)}%`}}></div>
-                    <div className="pipeline-label">
-                      <span>Reviewing</span>
-                      <strong>{stats.applications.reviewing}</strong>
-                    </div>
-                  </div>
-                  <div className="pipeline-item">
-                    <div className="pipeline-bar shortlisted" style={{width: `${calculatePercentage(stats.applications.shortlisted, stats.applications.total)}%`}}></div>
-                    <div className="pipeline-label">
-                      <span>Shortlisted</span>
-                      <strong>{stats.applications.shortlisted}</strong>
-                    </div>
-                  </div>
-                  <div className="pipeline-item">
-                    <div className="pipeline-bar accepted" style={{width: `${calculatePercentage(stats.applications.accepted, stats.applications.total)}%`}}></div>
-                    <div className="pipeline-label">
-                      <span>Accepted</span>
-                      <strong>{stats.applications.accepted}</strong>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Right Column */}
-            <div className="dashboard-right">
-              {/* Urgent Vacancies */}
-              <div className="section-card urgent-section">
-                <h2 className="section-title">
-                  ⚠️ Urgent Vacancies
+            {/* Right */}
+            <div className="space-y-5">
+              {/* Urgent vacancies */}
+              <div className="card p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-gray-700">Urgent Vacancies</h2>
                   {stats.urgentVacancies.length > 0 && (
-                    <span className="badge-count">{stats.urgentVacancies.length}</span>
+                    <span className="badge badge-red">{stats.urgentVacancies.length}</span>
                   )}
-                </h2>
+                </div>
                 {stats.urgentVacancies.length === 0 ? (
-                  <p className="no-data">No urgent vacancies</p>
+                  <p className="text-sm text-gray-400">No urgent vacancies</p>
                 ) : (
-                  <div className="urgent-list">
-                    {stats.urgentVacancies.map((vacancy) => (
-                      <div 
-                        key={vacancy.id} 
-                        className="urgent-item"
-                        onClick={() => navigate(`/vacancies/${vacancy.id}`)}
+                  <div className="space-y-2">
+                    {stats.urgentVacancies.map(v => (
+                      <div
+                        key={v.id}
+                        className="flex items-center justify-between p-3 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
+                        onClick={() => navigate(`/vacancies/${v.id}/edit`)}
                       >
-                        <div className="urgent-info">
-                          <h4>{vacancy.title}</h4>
-                          <p>{vacancy.department}</p>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{v.title}</p>
+                          <p className="text-xs text-gray-500">{v.department_name}</p>
                         </div>
-                        <div className="urgent-deadline">
-                          <span className="days-badge">
-                            {getDaysRemaining(vacancy.deadline)} days
-                          </span>
-                        </div>
+                        <span className="badge badge-red">{getDaysRemaining(v.deadline)}d</span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Top Vacancies */}
-              <div className="section-card">
-                <h2 className="section-title">🔥 Top Vacancies</h2>
+              {/* Top vacancies */}
+              <div className="card p-5">
+                <h2 className="text-sm font-semibold text-gray-700 mb-3">Top Vacancies</h2>
                 {stats.topVacancies.length === 0 ? (
-                  <p className="no-data">No vacancies yet</p>
+                  <p className="text-sm text-gray-400">No vacancies yet</p>
                 ) : (
-                  <div className="top-list">
-                    {stats.topVacancies.map((vacancy, index) => (
-                      <div 
-                        key={vacancy.id} 
-                        className="top-item"
-                        onClick={() => navigate(`/vacancies/${vacancy.id}`)}
+                  <div className="space-y-2">
+                    {stats.topVacancies.map((v, i) => (
+                      <div
+                        key={v.id}
+                        className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                        onClick={() => navigate(`/vacancies/${v.id}/edit`)}
                       >
-                        <span className="rank">#{index + 1}</span>
-                        <div className="top-info">
-                          <h4>{vacancy.title}</h4>
-                          <p>{vacancy.department}</p>
+                        <span className="text-xs font-bold text-gray-400 w-5">#{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{v.title}</p>
+                          <p className="text-xs text-gray-500">{v.department_name}</p>
                         </div>
-                        <div className="top-count">
-                          <span className="count-badge">{vacancy.applicationCount}</span>
-                          <span className="count-label">apps</span>
-                        </div>
+                        <span className="badge badge-blue">{v.applicationCount} apps</span>
                       </div>
                     ))}
                   </div>
@@ -393,88 +358,71 @@ function DashboardEnhanced() {
 
       {/* Analytics Tab */}
       {activeTab === 'analytics' && (
-        <div className="analytics-container">
-          <div className="analytics-grid">
-            {/* Vacancy Status Chart */}
-            <div className="chart-card">
-              <h2 className="section-title">Vacancy Status Distribution</h2>
-              <div className="donut-chart">
-                <div className="chart-legend">
-                  <div className="legend-item">
-                    <span className="legend-color open"></span>
-                    <span>Open ({stats.vacancies.open})</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Vacancy Status */}
+          <div className="card p-5">
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">Vacancy Status</h2>
+            <div className="space-y-3">
+              {[
+                { label: 'Open',   count: stats.vacancies.open,   color: 'bg-green-400' },
+                { label: 'Filled', count: stats.vacancies.filled, color: 'bg-blue-400' },
+                { label: 'Closed', count: stats.vacancies.closed, color: 'bg-gray-400' },
+                { label: 'Draft',  count: stats.vacancies.draft,  color: 'bg-yellow-400' },
+              ].map(({ label, count, color }) => (
+                <div key={label}>
+                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>{label}</span><strong>{count}</strong>
                   </div>
-                  <div className="legend-item">
-                    <span className="legend-color filled"></span>
-                    <span>Filled ({stats.vacancies.filled})</span>
-                  </div>
-                  <div className="legend-item">
-                    <span className="legend-color closed"></span>
-                    <span>Closed ({stats.vacancies.closed})</span>
-                  </div>
-                  <div className="legend-item">
-                    <span className="legend-color draft"></span>
-                    <span>Draft ({stats.vacancies.draft})</span>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${color}`} style={{ width: `${calculatePercentage(count, stats.vacancies.total)}%` }} />
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
+          </div>
 
-            {/* Application Funnel */}
-            <div className="chart-card">
-              <h2 className="section-title">Application Funnel</h2>
-              <div className="funnel-chart">
-                <div className="funnel-stage" style={{width: '100%'}}>
-                  <span>Total Applications</span>
-                  <strong>{stats.applications.total}</strong>
+          {/* Application Funnel */}
+          <div className="card p-5">
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">Application Funnel</h2>
+            <div className="space-y-2">
+              {[
+                { label: 'Total',       count: stats.applications.total,                                               pct: 100 },
+                { label: 'Under Review',count: stats.applications.reviewing + stats.applications.shortlisted,          pct: calculatePercentage(stats.applications.reviewing + stats.applications.shortlisted, stats.applications.total) },
+                { label: 'Shortlisted', count: stats.applications.shortlisted,                                         pct: calculatePercentage(stats.applications.shortlisted, stats.applications.total) },
+                { label: 'Accepted',    count: stats.applications.accepted,                                            pct: calculatePercentage(stats.applications.accepted, stats.applications.total) },
+              ].map(({ label, count, pct }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <span className="text-xs text-gray-500 w-28">{label}</span>
+                  <div className="flex-1 h-6 bg-gray-100 rounded overflow-hidden">
+                    <div className="h-full bg-primary-400 rounded flex items-center px-2" style={{ width: `${pct}%` }}>
+                      <span className="text-xs text-white font-medium">{count}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="funnel-stage" style={{width: `${calculatePercentage(stats.applications.reviewing + stats.applications.shortlisted + stats.applications.accepted, stats.applications.total)}%`}}>
-                  <span>Under Review</span>
-                  <strong>{stats.applications.reviewing + stats.applications.shortlisted}</strong>
-                </div>
-                <div className="funnel-stage" style={{width: `${calculatePercentage(stats.applications.shortlisted + stats.applications.accepted, stats.applications.total)}%`}}>
-                  <span>Shortlisted</span>
-                  <strong>{stats.applications.shortlisted}</strong>
-                </div>
-                <div className="funnel-stage" style={{width: `${calculatePercentage(stats.applications.accepted, stats.applications.total)}%`}}>
-                  <span>Accepted</span>
-                  <strong>{stats.applications.accepted}</strong>
-                </div>
-              </div>
+              ))}
             </div>
+          </div>
 
-            {/* Performance Metrics */}
-            <div className="chart-card full-width">
-              <h2 className="section-title">Performance Metrics</h2>
-              <div className="metrics-row">
-                <div className="performance-metric">
-                  <div className="perf-label">Acceptance Rate</div>
-                  <div className="perf-value">
-                    {calculatePercentage(stats.applications.accepted, stats.applications.total)}%
+          {/* Performance metrics */}
+          <div className="card p-5 lg:col-span-2">
+            <h2 className="text-sm font-semibold text-gray-700 mb-4">Performance Metrics</h2>
+            <div className="grid grid-cols-3 gap-6">
+              {[
+                { label: 'Acceptance Rate', count: stats.applications.accepted,  color: 'bg-green-500' },
+                { label: 'Rejection Rate',  count: stats.applications.rejected,  color: 'bg-red-500' },
+                { label: 'Pending Rate',    count: stats.applications.pending,   color: 'bg-yellow-500' },
+              ].map(({ label, count, color }) => {
+                const pct = calculatePercentage(count, stats.applications.total);
+                return (
+                  <div key={label}>
+                    <p className="text-xs text-gray-500 mb-1">{label}</p>
+                    <p className="text-2xl font-bold text-gray-900 mb-2">{pct}%</p>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+                    </div>
                   </div>
-                  <div className="perf-bar">
-                    <div className="perf-fill" style={{width: `${calculatePercentage(stats.applications.accepted, stats.applications.total)}%`}}></div>
-                  </div>
-                </div>
-                <div className="performance-metric">
-                  <div className="perf-label">Rejection Rate</div>
-                  <div className="perf-value">
-                    {calculatePercentage(stats.applications.rejected, stats.applications.total)}%
-                  </div>
-                  <div className="perf-bar">
-                    <div className="perf-fill rejected" style={{width: `${calculatePercentage(stats.applications.rejected, stats.applications.total)}%`}}></div>
-                  </div>
-                </div>
-                <div className="performance-metric">
-                  <div className="perf-label">Pending Review</div>
-                  <div className="perf-value">
-                    {calculatePercentage(stats.applications.pending, stats.applications.total)}%
-                  </div>
-                  <div className="perf-bar">
-                    <div className="perf-fill pending" style={{width: `${calculatePercentage(stats.applications.pending, stats.applications.total)}%`}}></div>
-                  </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -482,45 +430,45 @@ function DashboardEnhanced() {
 
       {/* Activity Tab */}
       {activeTab === 'activity' && (
-        <div className="activity-container">
-          <div className="activity-header">
-            <h2 className="section-title">Recent Activity</h2>
-            <div className="activity-filters">
-              <button className={dateRange === 'today' ? 'active' : ''} onClick={() => setDateRange('today')}>Today</button>
-              <button className={dateRange === 'week' ? 'active' : ''} onClick={() => setDateRange('week')}>This Week</button>
-              <button className={dateRange === 'month' ? 'active' : ''} onClick={() => setDateRange('month')}>This Month</button>
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-semibold text-gray-700">Recent Activity</h2>
+            <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+              {[['today','Today'],['week','This Week'],['month','This Month']].map(([key,label]) => (
+                <button
+                  key={key}
+                  onClick={() => setDateRange(key)}
+                  className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                    dateRange === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >{label}</button>
+              ))}
             </div>
           </div>
 
-          {stats.recentApplications.length === 0 ? (
-            <div className="no-data-large">
-              <div className="no-data-icon">📭</div>
-              <h3>No Recent Activity</h3>
-              <p>Applications will appear here as they come in</p>
+          {activityApplications.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-4xl mb-3">📭</p>
+              <p className="text-sm font-medium text-gray-700">No Recent Activity</p>
+              <p className="text-xs text-gray-400 mt-1">Applications will appear here as they come in</p>
             </div>
           ) : (
-            <div className="activity-timeline">
-              {stats.recentApplications.map((app, index) => (
-                <div 
-                  key={app.id} 
-                  className="timeline-item"
+            <div className="space-y-3">
+              {activityApplications.map((app) => (
+                <div
+                  key={app.id}
+                  className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
                   onClick={() => navigate(`/applications/${app.id}`)}
                 >
-                  <div className="timeline-marker"></div>
-                  <div className="timeline-content">
-                    <div className="timeline-header">
-                      <h4>{app.candidate_name}</h4>
-                      <span className="timeline-time">
-                        {new Date(app.applied_at).toLocaleDateString()}
-                      </span>
+                  <div className="w-2 h-2 rounded-full bg-primary-400 mt-2 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-gray-900 truncate">{app.candidate_name}</p>
+                      <span className="text-xs text-gray-400 flex-shrink-0">{new Date(app.applied_at).toLocaleDateString()}</span>
                     </div>
-                    <p className="timeline-description">
-                      Applied for <strong>{app.vacancy_title}</strong>
-                    </p>
-                    <div className="timeline-footer">
-                      <span className={`status-badge ${app.status}`}>
-                        {app.status}
-                      </span>
+                    <p className="text-xs text-gray-500 mt-0.5">Applied for <span className="font-medium text-gray-700">{app.vacancy_title}</span></p>
+                    <div className="mt-1">
+                      <span className={statusBadge(app.status)}>{app.status}</span>
                     </div>
                   </div>
                 </div>
@@ -529,7 +477,7 @@ function DashboardEnhanced() {
           )}
         </div>
       )}
-    </div>
+    </Layout>
   );
 }
 

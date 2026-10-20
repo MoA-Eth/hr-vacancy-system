@@ -15,6 +15,8 @@ import ScheduleInterview from './components/ScheduleInterview';
 import Register from './components/Register';
 import UserList from './components/UserList';
 import UserForm from './components/UserForm';
+import DepartmentList from './components/DepartmentList';
+import DepartmentForm from './components/DepartmentForm';
 
 function App() {
   return (
@@ -107,6 +109,31 @@ function App() {
             }
           />
           
+          <Route
+            path="/departments"
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <DepartmentList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/departments/new"
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <DepartmentForm />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/departments/:id/edit"
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <DepartmentForm />
+              </PrivateRoute>
+            }
+          />
+
           <Route path="/" element={<Navigate to="/jobs" replace />} />
           <Route path="*" element={<Navigate to="/jobs" replace />} />
         </Routes>

@@ -6,4 +6,4 @@ from .models import Vacancy
 class VacancyAdmin(admin.ModelAdmin):
     list_display = ('title', 'department', 'status', 'positions_available', 'deadline')
     list_filter = ('status', 'department', 'employment_type')
-    search_fields = ('title', 'department')
+    search_fields = ('title', 'department__name')

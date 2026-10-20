@@ -44,7 +44,9 @@ class Vacancy(models.Model):
     )
 
     title = models.CharField(max_length=200)
-    department = models.CharField(max_length=100)
+    department = models.ForeignKey(
+        'accounts.Department', on_delete=models.PROTECT, related_name='vacancies'
+    )
     location = models.CharField(max_length=100)
     employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, default='full_time')
     workplace_type = models.CharField(max_length=20, choices=WORKPLACE_TYPE_CHOICES, default='on_site')
@@ -73,7 +75,6 @@ class Vacancy(models.Model):
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['status']),
-            models.Index(fields=['department']),
         ]
 
     def __str__(self):

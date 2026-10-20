@@ -7,12 +7,13 @@ User = get_user_model()
 class VacancyListSerializer(serializers.ModelSerializer):
     """Serializer for listing vacancies (lighter data)"""
     posted_by_name = serializers.CharField(source='posted_by.username', read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
     is_open = serializers.BooleanField(read_only=True)
     
     class Meta:
         model = Vacancy
         fields = [
-            'id', 'title', 'department', 'location', 'employment_type',
+            'id', 'title', 'department', 'department_name', 'location', 'employment_type',
             'workplace_type', 'experience_level', 'category',
             'description', 'status', 'positions_available', 'deadline', 
             'posted_by_name', 'is_open', 'created_at'
@@ -23,12 +24,13 @@ class VacancyListSerializer(serializers.ModelSerializer):
 class VacancyDetailSerializer(serializers.ModelSerializer):
     """Serializer for creating/updating/viewing vacancy details"""
     posted_by_name = serializers.CharField(source='posted_by.username', read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True)
     application_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Vacancy
         fields = [
-            'id', 'title', 'department', 'location', 'employment_type',
+            'id', 'title', 'department', 'department_name', 'location', 'employment_type',
             'workplace_type', 'experience_level', 'category',
             'description', 'requirements', 'responsibilities',
             'min_salary', 'max_salary', 'positions_available', 'status',

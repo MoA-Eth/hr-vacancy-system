@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { applicationAPI } from '../api/applications';
 import { interviewAPI } from '../api/interviews';
 import { AuthContext } from '../context/AuthContext';
-import './ApplicationDetail.css';
+import Layout from './Layout';
 
 function ApplicationDetail() {
   const { id } = useParams();
@@ -74,375 +74,223 @@ function ApplicationDetail() {
     alert('PDF download feature - integrate with PDF library');
   };
 
-  if (loading) return <div className="loading">Loading...</div>;
-  if (error) return <div className="error">{error}</div>;
-  if (!application) return <div className="error">Application not found</div>;
+  const statusBadge = (s) => ({
+    applied:     'badge badge-yellow',
+    shortlisted: 'badge badge-blue',
+    interview:   'badge badge-purple',
+    offer:       'badge badge-green',
+    hired:       'badge badge-green',
+    rejected:    'badge badge-red',
+  }[s] || 'badge badge-gray');
+
+  const steps = ['applied','shortlisted','interview','offer','hired'];
+
+  if (loading) return (
+    <Layout>
+      <div className="flex items-center justify-center h-64">
+        <svg className="animate-spin h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      </div>
+    </Layout>
+  );
+  if (error) return <Layout><div className="card p-6 text-red-600">{error}</div></Layout>;
+  if (!application) return <Layout><div className="card p-6 text-red-600">Application not found</div></Layout>;
+
+  const infoRow = (label, value) => (
+    <div className="flex justify-between py-2 border-b border-gray-100 last:border-0">
+      <span className="text-xs font-medium text-gray-500">{label}</span>
+      <span className="text-xs text-gray-900 text-right max-w-xs">{value || '—'}</span>
+    </div>
+  );
 
   return (
-    <div className="application-detail-container">
-      {/* Header with Actions */}
-      <div className="detail-header">
-        <button onClick={() => navigate('/applications')} className="btn-back">
-          ← Back to Applications
-        </button>
-        <div className="header-actions">
-          <button onClick={handlePrint} className="btn-action">
-            🖨️ Print
-          </button>
-          <button onClick={handleDownloadPDF} className="btn-action">
-            📥 Download PDF
-          </button>
+    <Layout>
+      {/* Top bar */}
+      <div className="page-header">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary-100 flex items-center justify-center font-bold text-primary-700">
+            {getInitials(application.candidate.full_name)}
+          </div>
+          <div>
+            <h1 className="page-title">{application.candidate.full_name}</h1>
+            <p className="text-sm text-gray-500">Applying for <span className="font-medium text-gray-700">{application.vacancy.title}</span></p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {user?.role !== 'interviewer' && (
+            <select value={application.status} onChange={(e) => handleStatusChange(e.target.value)} className="form-input w-36">
+              <option value="applied">Applied</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="interview">Interview</option>
+              <option value="offer">Offer</option>
+              <option value="hired">Hired</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          )}
+          <span className={statusBadge(application.status)}>{application.status}</span>
+          <button onClick={() => navigate('/applications')} className="btn-secondary">← Back</button>
         </div>
       </div>
 
-      {/* Hero Section */}
-      <div className="hero-section">
-        <div className="hero-left">
-          <div className="avatar-hero">{getInitials(application.candidate.full_name)}</div>
-          <div className="hero-info">
-            <h1>{application.candidate.full_name}</h1>
-            <p className="hero-subtitle">Applying for {application.vacancy.title}</p>
-            <div className="hero-meta">
-              <span>📧 {application.candidate.email}</span>
-              <span>📱 {application.candidate.phone}</span>
-              <span>📅 Applied {new Date(application.applied_at).toLocaleDateString()}</span>
-            </div>
-          </div>
-        </div>
-        <div className="hero-right">
-          <div className="status-card">
-            <span className="status-label">Current Status</span>
-            <span 
-              className="status-badge-hero" 
-              style={{ backgroundColor: getStatusColor(application.status) }}
-            >
-              {application.status.toUpperCase()}
-            </span>
-            {user?.role !== 'interviewer' && (
-              <select
-                value={application.status}
-                onChange={(e) => handleStatusChange(e.target.value)}
-                className="status-select-hero"
-              >
-                <option value="applied">Applied</option>
-                <option value="shortlisted">Shortlisted</option>
-                <option value="interview">Interview</option>
-                <option value="offer">Offer</option>
-                <option value="hired">Hired</option>
-                <option value="rejected">Rejected</option>
-              </select>
-            )}
-          </div>
-          <div className="reference-card">
-            <span className="ref-label">Reference Code</span>
-            <span className="ref-code">{application.reference_code}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Progress Timeline */}
-      <div className="timeline-section">
-        <div className="timeline">
-          <div className="timeline-step" data-active={['applied', 'shortlisted', 'interview', 'offer', 'hired'].includes(application.status)}>
-            <div className="step-circle">1</div>
-            <span>Applied</span>
-          </div>
-          <div className="timeline-line" data-active={['shortlisted', 'interview', 'offer', 'hired'].includes(application.status)}></div>
-          <div className="timeline-step" data-active={['shortlisted', 'interview', 'offer', 'hired'].includes(application.status)}>
-            <div className="step-circle">2</div>
-            <span>Shortlisted</span>
-          </div>
-          <div className="timeline-line" data-active={['interview', 'offer', 'hired'].includes(application.status)}></div>
-          <div className="timeline-step" data-active={['interview', 'offer', 'hired'].includes(application.status)}>
-            <div className="step-circle">3</div>
-            <span>Interview</span>
-          </div>
-          <div className="timeline-line" data-active={['offer', 'hired'].includes(application.status)}></div>
-          <div className="timeline-step" data-active={['offer', 'hired'].includes(application.status)}>
-            <div className="step-circle">4</div>
-            <span>Offer</span>
-          </div>
-          <div className="timeline-line" data-active={application.status === 'hired'}></div>
-          <div className="timeline-step" data-active={application.status === 'hired'}>
-            <div className="step-circle">5</div>
-            <span>Hired</span>
-          </div>
+      {/* Progress steps */}
+      <div className="card p-4 mb-5">
+        <div className="flex items-center gap-1">
+          {steps.map((step, i) => {
+            const idx = steps.indexOf(application.status);
+            const active = i <= idx && application.status !== 'rejected';
+            return (
+              <React.Fragment key={step}>
+                <div className={`flex items-center gap-1.5 flex-1 ${ i > 0 ? '' : '' }`}>
+                  {i > 0 && <div className={`flex-1 h-0.5 ${ active ? 'bg-primary-400' : 'bg-gray-200' }`} />}
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                    active ? 'bg-primary-500 text-white' : 'bg-gray-200 text-gray-400'
+                  }`}>{i + 1}</div>
+                  <span className={`text-xs capitalize hidden sm:block ${ active ? 'text-primary-600 font-medium' : 'text-gray-400' }`}>{step}</span>
+                </div>
+              </React.Fragment>
+            );
+          })}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="tabs-container">
-        <div className="tabs">
-          <button 
-            className={activeTab === 'overview' ? 'tab active' : 'tab'}
-            onClick={() => setActiveTab('overview')}
-          >
-            📋 Overview
-          </button>
-          <button 
-            className={activeTab === 'education' ? 'tab active' : 'tab'}
-            onClick={() => setActiveTab('education')}
-          >
-            🎓 Education & Training
-          </button>
-          <button 
-            className={activeTab === 'documents' ? 'tab active' : 'tab'}
-            onClick={() => setActiveTab('documents')}
-          >
-            📄 Documents
-          </button>
-          <button 
-            className={activeTab === 'interviews' ? 'tab active' : 'tab'}
-            onClick={() => setActiveTab('interviews')}
-          >
-            💼 Interviews ({interviews.length})
-          </button>
-        </div>
+      <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-lg w-fit">
+        {[['overview','Overview'],['education','Education'],['documents','Documents'],['interviews',`Interviews (${interviews.length})`]].map(([key,label]) => (
+          <button key={key} onClick={() => setActiveTab(key)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              activeTab === key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}>{label}</button>
+        ))}
       </div>
 
-      {/* Tab Content */}
-      <div className="tab-content">
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div className="content-grid">
-            <div className="content-card">
-              <h2>Candidate Information</h2>
-              <div className="info-list">
-                <div className="info-row">
-                  <span className="info-label">Full Name</span>
-                  <span className="info-value">{application.candidate.full_name}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Email</span>
-                  <span className="info-value">{application.candidate.email}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Phone</span>
-                  <span className="info-value">{application.candidate.phone}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Address</span>
-                  <span className="info-value">{application.candidate.address || 'N/A'}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Date of Birth</span>
-                  <span className="info-value">{application.candidate.date_of_birth ? new Date(application.candidate.date_of_birth).toLocaleDateString() : 'N/A'}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Nationality</span>
-                  <span className="info-value">{application.candidate.nationality || 'N/A'}</span>
-                </div>
-              </div>
+      {/* Overview */}
+      {activeTab === 'overview' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="card p-5">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Candidate Information</h2>
+            {infoRow('Full Name', application.candidate.full_name)}
+            {infoRow('Email', application.candidate.email)}
+            {infoRow('Phone', application.candidate.phone)}
+            {infoRow('Address', application.candidate.address)}
+            {infoRow('Date of Birth', application.candidate.date_of_birth ? new Date(application.candidate.date_of_birth).toLocaleDateString() : null)}
+            {infoRow('Nationality', application.candidate.nationality)}
+            {infoRow('Reference', application.reference_code)}
+          </div>
+          <div className="card p-5">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Vacancy Information</h2>
+            {infoRow('Position', application.vacancy.title)}
+            {infoRow('Department', application.vacancy.department_name)}
+            {infoRow('Location', application.vacancy.location)}
+            {infoRow('Type', application.vacancy.employment_type?.replace(/_/g,' '))}
+            {infoRow('Workplace', application.vacancy.workplace_type?.replace(/_/g,' '))}
+            {infoRow('Experience', application.vacancy.experience_level?.replace(/_/g,' '))}
+          </div>
+          {application.candidate.cover_letter && (
+            <div className="card p-5 lg:col-span-2">
+              <h2 className="text-sm font-semibold text-gray-700 mb-2">Cover Letter</h2>
+              <p className="text-sm text-gray-600 whitespace-pre-wrap">{application.candidate.cover_letter}</p>
             </div>
+          )}
+        </div>
+      )}
 
-            <div className="content-card">
-              <h2>Vacancy Information</h2>
-              <div className="info-list">
-                <div className="info-row">
-                  <span className="info-label">Position</span>
-                  <span className="info-value">{application.vacancy.title}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Department</span>
-                  <span className="info-value">{application.vacancy.department}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Location</span>
-                  <span className="info-value">{application.vacancy.location}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Employment Type</span>
-                  <span className="info-value">{application.vacancy.employment_type?.replace('_', ' ')}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Workplace Type</span>
-                  <span className="info-value">{application.vacancy.workplace_type?.replace('_', ' ') || 'N/A'}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Experience Level</span>
-                  <span className="info-value">{application.vacancy.experience_level?.replace('_', ' ') || 'N/A'}</span>
-                </div>
+      {/* Education */}
+      {activeTab === 'education' && (
+        <div className="space-y-5">
+          <div className="card p-5">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Education</h2>
+            {application.candidate.education_history?.length > 0 ? (
+              <div className="space-y-3">
+                {application.candidate.education_history.map((edu, i) => (
+                  <div key={i} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between">
+                      <p className="text-sm font-medium text-gray-900">{edu.degree || edu.institution}</p>
+                      <span className="text-xs text-gray-400">{edu.year_of_graduation || edu.end_date}</span>
+                    </div>
+                    <p className="text-xs text-gray-500">{edu.institution}</p>
+                    {edu.field_of_study && <p className="text-xs text-gray-400">Field: {edu.field_of_study}</p>}
+                  </div>
+                ))}
               </div>
-            </div>
+            ) : <p className="text-sm text-gray-400">No education information provided</p>}
+          </div>
+          <div className="card p-5">
+            <h2 className="text-sm font-semibold text-gray-700 mb-3">Training & Certifications</h2>
+            {application.candidate.training_history?.length > 0 ? (
+              <div className="space-y-3">
+                {application.candidate.training_history.map((t, i) => (
+                  <div key={i} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between">
+                      <p className="text-sm font-medium text-gray-900">{t.degree || t.course_name || t.title}</p>
+                      <span className="text-xs text-gray-400">{t.end_date || t.year || t.completion_date}</span>
+                    </div>
+                    <p className="text-xs text-gray-500">{t.field_of_study || t.institution || t.provider}</p>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-sm text-gray-400">No training information provided</p>}
+          </div>
+        </div>
+      )}
 
-            {application.candidate.cover_letter && (
-              <div className="content-card full-width">
-                <h2>Cover Letter</h2>
-                <div className="cover-letter-box">
-                  {application.candidate.cover_letter}
-                </div>
+      {/* Documents */}
+      {activeTab === 'documents' && (
+        <div className="card p-5">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Uploaded Documents</h2>
+          <div className="space-y-3">
+            {[
+              { label: 'Resume/CV', url: application.candidate.resume },
+              { label: 'Education Documents', url: application.candidate.education_documents },
+              { label: 'Other Documents', url: application.candidate.other_documents },
+            ].filter(d => d.url).map(doc => (
+              <div key={doc.label} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-900">{doc.label}</p>
+                <a href={doc.url} target="_blank" rel="noopener noreferrer" className="btn-secondary text-xs py-1 px-3">Download</a>
               </div>
+            ))}
+            {!application.candidate.resume && !application.candidate.education_documents && !application.candidate.other_documents && (
+              <p className="text-sm text-gray-400">No documents uploaded</p>
             )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Education & Training Tab */}
-        {activeTab === 'education' && (
-          <div className="content-grid">
-            <div className="content-card full-width">
-              <h2>Education</h2>
-              {application.candidate.education_history && application.candidate.education_history.length > 0 ? (
-                <div className="education-list">
-                  {application.candidate.education_history.map((edu, index) => (
-                    <div key={index} className="education-item">
-                      <div className="edu-header">
-                        <h3>{edu.degree || edu.institution}</h3>
-                        <span className="edu-year">{edu.year_of_graduation || edu.end_date}</span>
-                      </div>
-                      <p className="edu-institution">{edu.institution}</p>
-                      {edu.field_of_study && <p className="edu-field">Field: {edu.field_of_study}</p>}
-                      {edu.grade && <p className="edu-grade">Grade: {edu.grade}</p>}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="empty-message">No education information provided</p>
-              )}
-            </div>
-
-            <div className="content-card full-width">
-              <h2>Training & Certifications</h2>
-              {application.candidate.training_history && application.candidate.training_history.length > 0 ? (
-                <div className="training-list">
-                  {application.candidate.training_history.map((train, index) => (
-                    <div key={index} className="training-item">
-                      <div className="train-header">
-                        <h3>{train.degree || train.course_name || train.title}</h3>
-                        <span className="train-year">{train.end_date || train.year || train.completion_date}</span>
-                      </div>
-                      <p className="train-institution">{train.field_of_study || train.institution || train.provider}</p>
-                      {train.start_date && train.end_date && (
-                        <p className="train-duration">Period: {train.start_date} to {train.end_date}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="empty-message">No training information provided</p>
-              )}
-            </div>
+      {/* Interviews */}
+      {activeTab === 'interviews' && (
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-700">Interviews</h2>
+            {user?.role !== 'interviewer' && (
+              <button onClick={() => navigate(`/applications/${id}/schedule-interview`)} className="btn-primary">+ Schedule</button>
+            )}
           </div>
-        )}
-
-        {/* Documents Tab */}
-        {activeTab === 'documents' && (
-          <div className="content-grid">
-            <div className="content-card full-width">
-              <h2>Uploaded Documents</h2>
-              <div className="documents-list">
-                {application.candidate.resume && (
-                  <div className="document-item">
-                    <div className="doc-icon">📄</div>
-                    <div className="doc-info">
-                      <h3>Resume/CV</h3>
-                      <p>Uploaded on {new Date(application.applied_at).toLocaleDateString()}</p>
-                    </div>
-                    <a href={application.candidate.resume} target="_blank" rel="noopener noreferrer" className="btn-download">
-                      Download
-                    </a>
+          {interviews.length === 0 ? (
+            <p className="text-sm text-gray-400">No interviews scheduled yet</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {interviews.map((iv) => (
+                <div key={iv.id} className="p-4 bg-gray-50 rounded-lg space-y-2">
+                  <div className="flex justify-between">
+                    <p className="text-sm font-semibold">Round {iv.round_number}</p>
+                    <span className={iv.result === 'passed' ? 'badge badge-green' : iv.result === 'failed' ? 'badge badge-red' : 'badge badge-gray'}>{iv.result || 'Pending'}</span>
                   </div>
-                )}
-                {application.candidate.education_documents && (
-                  <div className="document-item">
-                    <div className="doc-icon">🎓</div>
-                    <div className="doc-info">
-                      <h3>Education Documents</h3>
-                      <p>Uploaded on {new Date(application.applied_at).toLocaleDateString()}</p>
-                    </div>
-                    <a href={application.candidate.education_documents} target="_blank" rel="noopener noreferrer" className="btn-download">
-                      Download
-                    </a>
+                  <p className="text-xs text-gray-500">{new Date(iv.scheduled_at).toLocaleString()}</p>
+                  <div className="text-xs text-gray-600 space-y-1">
+                    <p><span className="font-medium">Interviewer:</span> {iv.interviewer_name}</p>
+                    <p><span className="font-medium">Mode:</span> {iv.mode}</p>
+                    {iv.location_or_link && <p><span className="font-medium">Location:</span> {iv.location_or_link}</p>}
+                    {iv.score !== null && <p><span className="font-medium">Score:</span> {iv.score}/10</p>}
                   </div>
-                )}
-                {application.candidate.other_documents && (
-                  <div className="document-item">
-                    <div className="doc-icon">📎</div>
-                    <div className="doc-info">
-                      <h3>Other Documents</h3>
-                      <p>Uploaded on {new Date(application.applied_at).toLocaleDateString()}</p>
-                    </div>
-                    <a href={application.candidate.other_documents} target="_blank" rel="noopener noreferrer" className="btn-download">
-                      Download
-                    </a>
-                  </div>
-                )}
-                {(!application.candidate.resume && !application.candidate.education_documents && !application.candidate.other_documents) && (
-                  <p className="empty-message">No documents uploaded</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Interviews Tab */}
-        {activeTab === 'interviews' && (
-          <div className="content-grid">
-            <div className="content-card full-width">
-              <div className="card-header-with-action">
-                <h2>Interview Schedule</h2>
-                {user?.role !== 'interviewer' && (
-                  <button 
-                    onClick={() => navigate(`/applications/${id}/schedule-interview`)}
-                    className="btn-primary"
-                  >
-                    + Schedule Interview
-                  </button>
-                )}
-              </div>
-              {interviews.length === 0 ? (
-                <div className="empty-state-small">
-                  <p>No interviews scheduled yet</p>
+                  {iv.feedback && <p className="text-xs text-gray-600 italic border-t pt-2">{iv.feedback}</p>}
                 </div>
-              ) : (
-                <div className="interviews-grid">
-                  {interviews.map((interview) => (
-                    <div key={interview.id} className="interview-card-modern">
-                      <div className="interview-card-header">
-                        <div>
-                          <h3>Round {interview.round_number}</h3>
-                          <p className="interview-date">{new Date(interview.scheduled_at).toLocaleString()}</p>
-                        </div>
-                        <span className={`result-badge ${interview.result || 'pending'}`}>
-                          {interview.result || 'Pending'}
-                        </span>
-                      </div>
-                      <div className="interview-card-body">
-                        <div className="interview-info-row">
-                          <span className="info-icon">👤</span>
-                          <span>{interview.interviewer_name}</span>
-                        </div>
-                        <div className="interview-info-row">
-                          <span className="info-icon">💻</span>
-                          <span>{interview.mode}</span>
-                        </div>
-                        {interview.location_or_link && (
-                          <div className="interview-info-row">
-                            <span className="info-icon">📍</span>
-                            <span>{interview.location_or_link}</span>
-                          </div>
-                        )}
-                        {interview.score !== null && (
-                          <div className="interview-info-row">
-                            <span className="info-icon">⭐</span>
-                            <span>Score: {interview.score}/10</span>
-                          </div>
-                        )}
-                      </div>
-                      {interview.feedback && (
-                        <div className="interview-feedback-box">
-                          <strong>Feedback:</strong>
-                          <p>{interview.feedback}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
-          </div>
-        )}
-      </div>
-    </div>
+          )}
+        </div>
+      )}
+    </Layout>
   );
 }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { vacancyAPI } from '../api/vacancies';
 import Header from './Header';
-import './PublicJobs.css';
+import heroBg from '../asset/hr_home.jpg';
 
 function PublicJobs() {
   const [vacancies, setVacancies] = useState([]);
@@ -81,149 +81,207 @@ function PublicJobs() {
     setCategoryFilter('');
   };
 
-  if (loading) return <div className="loading">Loading job openings...</div>;
-  if (error) return <div className="error">{error}</div>;
+  const hasActiveFilters = searchTerm || locationFilter || typeFilter || workplaceFilter || experienceFilter || categoryFilter;
+
+  if (loading) return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="flex items-center justify-center h-64">
+        <svg className="animate-spin h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+        </svg>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <div className="max-w-6xl mx-auto px-6 py-8"><div className="card p-6 text-red-600">{error}</div></div>
+    </div>
+  );
 
   return (
-    <div className="public-jobs-container">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="jobs-layout">
-        {/* Left Sidebar Filter */}
-        <aside className="filters-sidebar">
-          <div className="filters-header">
-            <h3>🔍 Filters</h3>
-            <button onClick={resetFilters} className="reset-btn">
-              Reset All
-            </button>
-          </div>
 
-          <div className="filter-group">
-            <label>Search</label>
-            <input
-              type="text"
-              placeholder="Job title or keyword..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="filter-input"
-            />
-          </div>
-
-          <div className="filter-group">
-            <label>Location</label>
-            <select value={locationFilter} onChange={(e) => setLocationFilter(e.target.value)}>
+      {/* Hero Banner */}
+      <div
+        className="relative text-white py-20 px-6"
+        style={{
+          backgroundImage: `url(${heroBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* dark overlay */}
+        <div className="absolute inset-0 bg-primary-900/70" />
+        <div className="relative max-w-6xl mx-auto">
+          <p className="text-primary-200 text-xs font-semibold uppercase tracking-widest mb-3">We're Hiring</p>
+          <h1 className="text-4xl font-bold mb-2">Find Your Next Opportunity</h1>
+          <p className="text-primary-100 text-base mb-8 max-w-lg">Browse {vacancies.length} open position{vacancies.length !== 1 ? 's' : ''} and take the next step in your career.</p>
+          {/* Hero search bar */}
+          <div className="flex gap-2 max-w-xl">
+            <div className="flex-1 relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 111 11a6 6 0 0116 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Search by title or keyword..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2.5 rounded-lg text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/50"
+              />
+            </div>
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="pl-3 pr-8 py-2.5 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-white/50 bg-white"
+            >
               <option value="">All Locations</option>
-              {locations.map(loc => <option key={loc} value={loc}>{loc}</option>)}
+              {locations.map(l => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
-
-          <div className="filter-group">
-            <label>Employment Type</label>
-            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-              <option value="">All Types</option>
-              {employmentTypes.map(type => <option key={type} value={type}>{formatLabel(type)}</option>)}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Workplace Type</label>
-            <select value={workplaceFilter} onChange={(e) => setWorkplaceFilter(e.target.value)}>
-              <option value="">All Workplaces</option>
-              {workplaceTypes.map(type => <option key={type} value={type}>{formatLabel(type)}</option>)}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Experience Level</label>
-            <select value={experienceFilter} onChange={(e) => setExperienceFilter(e.target.value)}>
-              <option value="">All Levels</option>
-              {experienceLevels.map(level => <option key={level} value={level}>{formatLabel(level)}</option>)}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Category</label>
-            <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-              <option value="">All Categories</option>
-              {categories.map(cat => <option key={cat} value={cat}>{formatLabel(cat)}</option>)}
-            </select>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="jobs-content">
-          <div className="jobs-header-bar">
-            <h2>Available Positions</h2>
-            <span className="job-count">{filteredVacancies.length} job{filteredVacancies.length !== 1 ? 's' : ''} found</span>
-          </div>
-
-          {filteredVacancies.length === 0 ? (
-          <div className="no-jobs">
-            <p>No job openings match your criteria.</p>
-            <p>Please adjust your filters or check back later!</p>
-          </div>
-        ) : (
-          <div className="jobs-grid">
-            {filteredVacancies.map((vacancy) => {
-              const isDeadlinePassed = new Date(vacancy.deadline) < new Date();
-              const daysRemaining = Math.ceil((new Date(vacancy.deadline) - new Date()) / (1000 * 60 * 60 * 24));
-              
-              return (
-              <div key={vacancy.id} className={`job-card ${isDeadlinePassed ? 'expired' : ''}`}>
-                <h2>{vacancy.title}</h2>
-                <div className="job-meta">
-                  <span>📍 {vacancy.location}</span>
-                  <span>💼 {formatLabel(vacancy.employment_type)}</span>
-                  <span>🏢 {vacancy.department}</span>
-                </div>
-                <div className="job-tags">
-                  {vacancy.workplace_type && <span className="tag tag-workplace">{formatLabel(vacancy.workplace_type)}</span>}
-                  {vacancy.experience_level && <span className="tag tag-experience">{formatLabel(vacancy.experience_level)}</span>}
-                  {vacancy.category && <span className="tag tag-category">{formatLabel(vacancy.category)}</span>}
-                </div>
-                <p className="job-description">
-                  {vacancy.description ? vacancy.description.substring(0, 150) + '...' : 'No description available'}
-                </p>
-                <div className="job-actions">
-                  <button 
-                    onClick={() => navigate(`/jobs/${vacancy.id}`)}
-                    className="view-more-btn"
-                  >
-                    View More
-                  </button>
-                  {isDeadlinePassed ? (
-                    <button className="apply-btn disabled" disabled>
-                      Deadline Passed
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => navigate(`/apply/${vacancy.id}`)}
-                      className="apply-btn"
-                    >
-                      Apply Now
-                    </button>
-                  )}
-                </div>
-                <div className="job-footer">
-                  <span className="positions">
-                    {vacancy.positions_available} position{vacancy.positions_available > 1 ? 's' : ''} available
-                  </span>
-                </div>
-                <div className={`deadline ${isDeadlinePassed ? 'expired' : daysRemaining <= 3 ? 'urgent' : ''}`}>
-                  {isDeadlinePassed ? (
-                    <>🚫 Deadline passed: {new Date(vacancy.deadline).toLocaleDateString()}</>
-                  ) : daysRemaining <= 3 ? (
-                    <>⚠️ Closing soon: {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} left</>
-                  ) : (
-                    <>⏰ Apply by: {new Date(vacancy.deadline).toLocaleDateString()}</>
-                  )}
-                </div>
-              </div>
-              );
-            })}
-          </div>
-        )}
-        </main>
+        </div>
       </div>
+
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="flex gap-7">
+
+          {/* Sidebar Filters */}
+          <aside className="w-52 flex-shrink-0">
+            <div className="card p-4 space-y-4 sticky top-20">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-gray-800">Filters</h3>
+                {hasActiveFilters && (
+                  <button onClick={resetFilters} className="text-xs text-primary-600 hover:text-primary-700 font-medium">Clear all</button>
+                )}
+              </div>
+
+              {[
+                { label: 'Employment Type', value: typeFilter, setter: setTypeFilter, options: employmentTypes },
+                { label: 'Workplace', value: workplaceFilter, setter: setWorkplaceFilter, options: workplaceTypes },
+                { label: 'Experience', value: experienceFilter, setter: setExperienceFilter, options: experienceLevels },
+                { label: 'Category', value: categoryFilter, setter: setCategoryFilter, options: categories },
+              ].map(({ label, value, setter, options }) => options.length > 0 && (
+                <div key={label}>
+                  <label className="form-label">{label}</label>
+                  <select value={value} onChange={(e) => setter(e.target.value)} className="form-input">
+                    <option value="">All</option>
+                    {options.map(o => <option key={o} value={o}>{formatLabel(o)}</option>)}
+                  </select>
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          {/* Job Listings */}
+          <main className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-sm text-gray-500">
+                {hasActiveFilters
+                  ? <><span className="font-semibold text-gray-900">{filteredVacancies.length}</span> result{filteredVacancies.length !== 1 ? 's' : ''} found</>
+                  : <><span className="font-semibold text-gray-900">{filteredVacancies.length}</span> open position{filteredVacancies.length !== 1 ? 's' : ''}</>
+                }
+              </p>
+            </div>
+
+            {filteredVacancies.length === 0 ? (
+              <div className="card p-14 text-center col-span-2">
+                <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="font-medium text-gray-700 mb-1">No positions found</p>
+                <p className="text-sm text-gray-400 mb-4">Try adjusting your search or filters.</p>
+                <button onClick={resetFilters} className="btn-secondary text-sm">Clear Filters</button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {filteredVacancies.map((v) => {
+                  const isExpired = new Date(v.deadline) < new Date();
+                  const days = Math.ceil((new Date(v.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div
+                      key={v.id}
+                      onClick={() => navigate(`/jobs/${v.id}`)}
+                      className={`card p-5 cursor-pointer hover:shadow-md hover:border-primary-300 border border-transparent transition-all group flex flex-col ${isExpired ? 'opacity-55' : ''}`}
+                    >
+                      {/* Card top */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-100 transition-colors">
+                            <svg className="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors leading-tight">{v.title}</h3>
+                            <p className="text-xs text-gray-400 mt-0.5">{v.department_name}</p>
+                          </div>
+                        </div>
+                        {/* Deadline chip */}
+                        {isExpired ? (
+                          <span className="badge badge-red flex-shrink-0">Closed</span>
+                        ) : days <= 3 ? (
+                          <span className="badge badge-yellow flex-shrink-0">⚠ {days}d left</span>
+                        ) : (
+                          <span className="text-xs text-gray-400 flex-shrink-0">Due {new Date(v.deadline).toLocaleDateString()}</span>
+                        )}
+                      </div>
+
+                      {/* Description */}
+                      {v.description && (
+                        <p className="text-xs text-gray-400 line-clamp-2 mb-3">
+                          {v.description.substring(0, 160)}
+                        </p>
+                      )}
+
+                      {/* Meta pills */}
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                          {v.location}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          {formatLabel(v.employment_type)}
+                        </span>
+                        {v.workplace_type && (
+                          <span className="inline-flex items-center text-xs text-primary-700 bg-primary-50 px-2 py-0.5 rounded-full">{formatLabel(v.workplace_type)}</span>
+                        )}
+                        {v.experience_level && (
+                          <span className="inline-flex items-center text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">{formatLabel(v.experience_level)}</span>
+                        )}
+                      </div>
+
+                      {/* Card footer */}
+                      <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
+                        <span className="text-xs text-gray-400">{v.positions_available} position{v.positions_available > 1 ? 's' : ''} available</span>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); navigate(`/apply/${v.id}`); }}
+                          disabled={isExpired}
+                          className="btn-primary text-xs py-1.5 px-4 disabled:opacity-40"
+                        >
+                          {isExpired ? 'Closed' : 'Apply Now'}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="border-t border-gray-200 mt-12 py-6 text-center text-xs text-gray-400">
+        &copy; {new Date().getFullYear()} HR Portal. All rights reserved.
+      </footer>
     </div>
   );
 }

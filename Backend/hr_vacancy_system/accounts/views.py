@@ -4,11 +4,14 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
+from django.db.models.deletion import ProtectedError
+from .models import Department
 from .serializers import (
     CustomTokenObtainPairSerializer, UserRegistrationSerializer,
-    UserSerializer, ChangePasswordSerializer
+    UserSerializer, ProfileSerializer, ChangePasswordSerializer,
+    DepartmentSerializer
 )
-from .permissions import IsAdminUser
+from .permissions import IsAdminUser, IsAdminOrReadOnly
 
 User = get_user_model()
 
@@ -45,7 +48,7 @@ def update_profile(request):
     Update current user profile
     PUT/PATCH /api/auth/profile/
     """
-    serializer = UserSerializer(request.user, data=request.data, partial=True)
+    serializer = ProfileSerializer(request.user, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
@@ -83,7 +86,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     ViewSet for user management (Admin only)
     """
-    queryset = User.objects.all()
+    queryset = User.objects.select_related('department').all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
     
@@ -97,3 +100,29 @@ class UserViewSet(viewsets.ModelViewSet):
         user = serializer.save()
         # Password is already hashed in UserRegistrationSerializer
         return user
+
+
+class DepartmentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for departments
+    - Anyone can list/retrieve active departments (used by forms and public filters)
+    - Only admins can create/update/delete, and admins also see inactive departments
+    """
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        queryset = Department.objects.all()
+        user = self.request.user
+        if not (user and user.is_authenticated and user.role == 'admin'):
+            queryset = queryset.filter(is_active=True)
+        return queryset
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            return Response(
+                {'error': 'This department still has vacancies. Reassign or delete them first, or mark the department inactive.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
