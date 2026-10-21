@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { vacancyAPI } from '../api/vacancies';
 import Header from './Header';
+import '../styles/richText.css';
 
 function PublicJobDetail() {
   const { id } = useParams();
@@ -111,7 +113,10 @@ function PublicJobDetail() {
                   <span className="w-1 h-4 bg-primary-600 rounded-full inline-block"></span>
                   Job Description
                 </h2>
-                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{vacancy.description}</p>
+                <div
+                  className="rich-text-output text-sm text-gray-600 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vacancy.description) }}
+                />
               </div>
             )}
 
@@ -121,7 +126,10 @@ function PublicJobDetail() {
                   <span className="w-1 h-4 bg-primary-600 rounded-full inline-block"></span>
                   Responsibilities
                 </h2>
-                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{vacancy.responsibilities}</p>
+                <div
+                  className="rich-text-output text-sm text-gray-600 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vacancy.responsibilities) }}
+                />
               </div>
             )}
 
@@ -131,7 +139,10 @@ function PublicJobDetail() {
                   <span className="w-1 h-4 bg-primary-600 rounded-full inline-block"></span>
                   Requirements
                 </h2>
-                <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">{vacancy.requirements}</p>
+                <div
+                  className="rich-text-output text-sm text-gray-600 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(vacancy.requirements) }}
+                />
               </div>
             )}
           </div>
@@ -178,7 +189,8 @@ function PublicJobDetail() {
                 { label: 'Type', value: formatLabel(vacancy.employment_type) },
                 vacancy.workplace_type && { label: 'Work Mode', value: formatLabel(vacancy.workplace_type) },
                 vacancy.experience_level && { label: 'Experience', value: formatLabel(vacancy.experience_level) },
-                vacancy.category && { label: 'Category', value: formatLabel(vacancy.category) },
+                vacancy.category_name && { label: 'Category', value: vacancy.category_name },
+                vacancy.project_name && { label: 'Project', value: vacancy.project_name },
               ].filter(Boolean).map(({ label, value }) => (
                 <div key={label} className="flex justify-between text-xs">
                   <span className="text-gray-400">{label}</span>

@@ -38,9 +38,13 @@ function VacancyList() {
 
     // Search filter
     if (searchTerm) {
+      const stripHtml = (html) => {
+        if (!html) return '';
+        return new DOMParser().parseFromString(html, 'text/html').body.textContent || '';
+      };
       filtered = filtered.filter(v => 
         v.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        v.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        stripHtml(v.description).toLowerCase().includes(searchTerm.toLowerCase()) ||
         v.location?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }

@@ -2,8 +2,11 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { vacancyAPI } from '../api/vacancies';
 import { departmentAPI } from '../api/departments';
+import { categoryAPI } from '../api/categories';
+import { projectAPI } from '../api/projects';
 import { AuthContext } from '../context/AuthContext';
 import Layout from './Layout';
+import RichTextEditor from './RichTextEditor';
 
 function VacancyForm() {
   const { id } = useParams();
@@ -12,6 +15,8 @@ function VacancyForm() {
   const isEditMode = Boolean(id);
   const isRecruiter = user?.role === 'recruiter';
   const [departments, setDepartments] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -23,7 +28,8 @@ function VacancyForm() {
     employment_type: 'full_time',
     workplace_type: 'on_site',
     experience_level: 'entry',
-    category: 'other',
+    category: '',
+    project: '',
     salary_min: '',
     salary_max: '',
     positions_available: 1,
@@ -44,6 +50,12 @@ function VacancyForm() {
     departmentAPI.getAll()
       .then(setDepartments)
       .catch((err) => console.error('Failed to load departments', err));
+    categoryAPI.getAll()
+      .then((data) => setCategories(data.filter(c => c.is_active)))
+      .catch((err) => console.error('Failed to load categories', err));
+    projectAPI.getAll({ is_active: true })
+      .then(setProjects)
+      .catch((err) => console.error('Failed to load projects', err));
   }, []);
 
   useEffect(() => {
@@ -65,7 +77,8 @@ function VacancyForm() {
         employment_type: data.employment_type,
         workplace_type: data.workplace_type || 'on_site',
         experience_level: data.experience_level || 'entry',
-        category: data.category || 'other',
+        category: data.category ? String(data.category) : '',
+        project: data.project ? String(data.project) : '',
         salary_min: data.salary_min || '',
         salary_max: data.salary_max || '',
         positions_available: data.positions_available,
@@ -86,16 +99,28 @@ function VacancyForm() {
     }));
   };
 
+  const handleRichText = (name) => (value) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
+      const payload = {
+        ...formData,
+        category: formData.category || null,
+        project: formData.project || null,
+      };
       if (isEditMode) {
-        await vacancyAPI.update(id, formData);
+        await vacancyAPI.update(id, payload);
       } else {
-        await vacancyAPI.create(formData);
+        await vacancyAPI.create(payload);
       }
       navigate('/vacancies');
     } catch (err) {
@@ -172,35 +197,50 @@ function VacancyForm() {
               </select>
             </div>
             <div>
-              <label className="form-label">Category *</label>
-              <select name="category" className="form-input" value={formData.category} onChange={handleChange} required>
-                <option value="software">Software Development</option>
-                <option value="project_management">Project Management</option>
-                <option value="data">Data & Analytics</option>
-                <option value="design">Design & UX</option>
-                <option value="marketing">Marketing</option>
-                <option value="sales">Sales</option>
-                <option value="hr">Human Resources</option>
-                <option value="finance">Finance & Accounting</option>
-                <option value="operations">Operations</option>
-                <option value="customer_service">Customer Service</option>
-                <option value="engineering">Engineering</option>
-                <option value="other">Other</option>
+              <label className="form-label">Category</label>
+              <select name="category" className="form-input" value={formData.category} onChange={handleChange}>
+                <option value="">No category</option>
+                {categories.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
               </select>
             </div>
           </div>
 
           <div>
+            <label className="form-label">Project <span className="text-gray-400 font-normal">(optional)</span></label>
+            <select name="project" className="form-input" value={formData.project} onChange={handleChange}>
+              <option value="">No project</option>
+              {projects
+                .filter(p => !formData.department || String(p.department) === formData.department)
+                .map(p => <option key={p.id} value={String(p.id)}>{p.name} — {p.department_name}</option>)}
+            </select>
+            {formData.department && projects.filter(p => String(p.department) === formData.department).length === 0 && (
+              <p className="text-xs text-gray-400 mt-1">No projects in the selected department.</p>
+            )}
+          </div>
+
+          <div>
             <label className="form-label">Description *</label>
-            <textarea name="description" className="form-input" value={formData.description} onChange={handleChange} rows="4" required />
+            <RichTextEditor
+              value={formData.description}
+              onChange={handleRichText('description')}
+              placeholder="Describe the role and what the candidate will do..."
+            />
           </div>
           <div>
             <label className="form-label">Requirements *</label>
-            <textarea name="requirements" className="form-input" value={formData.requirements} onChange={handleChange} rows="4" required />
+            <RichTextEditor
+              value={formData.requirements}
+              onChange={handleRichText('requirements')}
+              placeholder="List qualifications, skills, experience needed..."
+            />
           </div>
           <div>
             <label className="form-label">Responsibilities *</label>
-            <textarea name="responsibilities" className="form-input" value={formData.responsibilities} onChange={handleChange} rows="4" required />
+            <RichTextEditor
+              value={formData.responsibilities}
+              onChange={handleRichText('responsibilities')}
+              placeholder="List day-to-day responsibilities..."
+            />
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

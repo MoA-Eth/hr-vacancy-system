@@ -17,6 +17,9 @@ import UserList from './components/UserList';
 import UserForm from './components/UserForm';
 import DepartmentList from './components/DepartmentList';
 import DepartmentForm from './components/DepartmentForm';
+import CategoryList from './components/CategoryList';
+import ProjectList from './components/ProjectList';
+import ProjectForm from './components/ProjectForm';
 
 function App() {
   return (
@@ -130,6 +133,38 @@ function App() {
             element={
               <PrivateRoute allowedRoles={['admin']}>
                 <DepartmentForm />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/categories"
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <CategoryList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <ProjectList />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/projects/new"
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <ProjectForm />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/projects/:id/edit"
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <ProjectForm />
               </PrivateRoute>
             }
           />

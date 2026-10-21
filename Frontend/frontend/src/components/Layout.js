@@ -34,6 +34,18 @@ const NAV = [
         d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
     ),
   },
+  { to: '/projects', label: 'Projects', roles: ['admin'],
+    icon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+    ),
+  },
+  { to: '/categories', label: 'Categories', roles: ['admin'],
+    icon: (
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M7 7h.01M7 3h5.586a1 1 0 01.707.293l7.414 7.414a1 1 0 010 1.414l-7.414 7.414a1 1 0 01-1.414 0L4.879 12.12A1 1 0 014.586 11.414V5a2 2 0 012-2h.414z" />
+    ),
+  },
 ];
 
 export default function Layout({ children }) {

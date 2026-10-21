@@ -4,9 +4,10 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Vacancy
-from .serializers import VacancyListSerializer, VacancyDetailSerializer
+from .models import Vacancy, Category, Project
+from .serializers import VacancyListSerializer, VacancyDetailSerializer, CategorySerializer, ProjectSerializer
 from accounts.permissions import IsAdminOrRecruiter, CanManageVacancy
+from accounts.permissions import IsAdminUser
 
 
 class VacancyViewSet(viewsets.ModelViewSet):
@@ -19,10 +20,10 @@ class VacancyViewSet(viewsets.ModelViewSet):
     - Partial Update: PATCH /api/vacancies/{id}/
     - Delete: DELETE /api/vacancies/{id}/
     """
-    queryset = Vacancy.objects.select_related('department', 'posted_by').all()
+    queryset = Vacancy.objects.select_related('department', 'posted_by', 'category', 'project').all()
     permission_classes = [IsAdminOrRecruiter]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'department', 'employment_type']
+    filterset_fields = ['status', 'department', 'employment_type', 'category', 'project']
     search_fields = ['title', 'description', 'requirements']
     ordering_fields = ['created_at', 'deadline', 'title']
     ordering = ['-created_at']
@@ -129,3 +130,42 @@ class VacancyViewSet(viewsets.ModelViewSet):
                 {'error': 'Vacancy not found, not open, or deadline has passed'},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+class CategoryViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing job categories.
+    - Read: Any authenticated user
+    - Write (create/update/delete): Admin only
+    """
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['name']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing projects.
+    - Read: Any authenticated user
+    - Write (create/update/delete): Admin only
+    """
+    queryset = Project.objects.select_related('department').all()
+    serializer_class = ProjectSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['department', 'is_active']
+    search_fields = ['name', 'description']
+    ordering_fields = ['name', 'created_at']
+    ordering = ['name']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]

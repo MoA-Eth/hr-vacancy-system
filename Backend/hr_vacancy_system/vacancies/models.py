@@ -3,6 +3,39 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator
 
+
+class Category(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name_plural = 'categories'
+
+    def __str__(self):
+        return self.name
+
+
+class Project(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    department = models.ForeignKey(
+        'accounts.Department', on_delete=models.CASCADE, related_name='projects'
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.department})"
+
+
 class Vacancy(models.Model):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
@@ -28,20 +61,6 @@ class Vacancy(models.Model):
         ('senior', 'Senior'),
         ('lead', 'Lead/Manager'),
     )
-    CATEGORY_CHOICES = (
-        ('software', 'Software Development'),
-        ('project_management', 'Project Management'),
-        ('data', 'Data & Analytics'),
-        ('design', 'Design & UX'),
-        ('marketing', 'Marketing'),
-        ('sales', 'Sales'),
-        ('hr', 'Human Resources'),
-        ('finance', 'Finance & Accounting'),
-        ('operations', 'Operations'),
-        ('customer_service', 'Customer Service'),
-        ('engineering', 'Engineering'),
-        ('other', 'Other'),
-    )
 
     title = models.CharField(max_length=200)
     department = models.ForeignKey(
@@ -51,7 +70,12 @@ class Vacancy(models.Model):
     employment_type = models.CharField(max_length=20, choices=EMPLOYMENT_TYPE_CHOICES, default='full_time')
     workplace_type = models.CharField(max_length=20, choices=WORKPLACE_TYPE_CHOICES, default='on_site')
     experience_level = models.CharField(max_length=20, choices=EXPERIENCE_LEVEL_CHOICES, default='entry')
-    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, default='other')
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='vacancies'
+    )
+    project = models.ForeignKey(
+        Project, on_delete=models.SET_NULL, null=True, blank=True, related_name='vacancies'
+    )
 
     description = models.TextField()
     requirements = models.TextField()

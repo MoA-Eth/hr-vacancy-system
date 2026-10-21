@@ -4,6 +4,12 @@ import { vacancyAPI } from '../api/vacancies';
 import Header from './Header';
 import heroBg from '../asset/hr_home.jpg';
 
+const stripHtml = (html) => {
+  if (!html) return '';
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || '';
+};
+
 function PublicJobs() {
   const [vacancies, setVacancies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +47,7 @@ function PublicJobs() {
     if (searchTerm) {
       result = result.filter(vacancy =>
         vacancy.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (vacancy.description && vacancy.description.toLowerCase().includes(searchTerm.toLowerCase()))
+        stripHtml(vacancy.description).toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
     if (locationFilter) {
@@ -57,7 +63,7 @@ function PublicJobs() {
       result = result.filter(vacancy => vacancy.experience_level === experienceFilter);
     }
     if (categoryFilter) {
-      result = result.filter(vacancy => vacancy.category === categoryFilter);
+      result = result.filter(vacancy => vacancy.category_name === categoryFilter);
     }
     setFilteredVacancies(result);
   }, [searchTerm, locationFilter, typeFilter, workplaceFilter, experienceFilter, categoryFilter, vacancies]);
@@ -66,7 +72,7 @@ function PublicJobs() {
   const employmentTypes = [...new Set(vacancies.map(v => v.employment_type))];
   const workplaceTypes = [...new Set(vacancies.map(v => v.workplace_type).filter(Boolean))];
   const experienceLevels = [...new Set(vacancies.map(v => v.experience_level).filter(Boolean))];
-  const categories = [...new Set(vacancies.map(v => v.category).filter(Boolean))];
+  const categories = [...new Set(vacancies.map(v => v.category_name).filter(Boolean))];
 
   const formatLabel = (value) => {
     if (!value) return '';
@@ -277,7 +283,7 @@ function PublicJobs() {
                       {/* Description */}
                       {v.description && (
                         <p className="text-xs text-gray-400 line-clamp-2 mb-3">
-                          {v.description.substring(0, 160)}
+                          {stripHtml(v.description).substring(0, 160)}
                         </p>
                       )}
 

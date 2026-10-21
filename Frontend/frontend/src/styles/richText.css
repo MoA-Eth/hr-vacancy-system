@@ -1,0 +1,79 @@
+/* Quill editor — match the app's form-input styling */
+.rich-editor .ql-toolbar {
+  border: 1px solid #d1d5db;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: #f9fafb;
+}
+
+.rich-editor .ql-container {
+  border: 1px solid #d1d5db;
+  border-radius: 0 0 0.5rem 0.5rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+.rich-editor .ql-editor {
+  min-height: 140px;
+  color: #374151;
+  padding: 10px 14px;
+}
+
+.rich-editor .ql-editor.ql-blank::before {
+  color: #9ca3af;
+  font-style: normal;
+}
+
+.rich-editor .ql-toolbar .ql-stroke {
+  stroke: #6b7280;
+}
+
+.rich-editor .ql-toolbar .ql-fill {
+  fill: #6b7280;
+}
+
+.rich-editor .ql-toolbar .ql-picker {
+  color: #6b7280;
+}
+
+.rich-editor:focus-within .ql-toolbar,
+.rich-editor:focus-within .ql-container {
+  border-color: #095209;
+}
+
+/* Rendered rich-text output (public detail page etc.) */
+.rich-text-output h1,
+.rich-text-output h2,
+.rich-text-output h3 {
+  font-weight: 600;
+  color: #111827;
+  margin: 0.75rem 0 0.35rem;
+}
+
+.rich-text-output h1 { font-size: 1.4rem; }
+.rich-text-output h2 { font-size: 1.2rem; }
+.rich-text-output h3 { font-size: 1.05rem; }
+
+.rich-text-output p { margin: 0.3rem 0; }
+
+.rich-text-output ul,
+.rich-text-output ol {
+  padding-left: 1.5rem;
+  margin: 0.4rem 0;
+}
+
+.rich-text-output ul { list-style: disc; }
+.rich-text-output ol { list-style: decimal; }
+
+.rich-text-output li { margin: 0.15rem 0; }
+
+.rich-text-output a { color: #095209; text-decoration: underline; }
+
+.rich-text-output strong { font-weight: 600; }
+.rich-text-output em { font-style: italic; }
+.rich-text-output u { text-decoration: underline; }
+.rich-text-output s { text-decoration: line-through; }
+
+.rich-text-output .ql-size-small { font-size: 0.8em; }
+.rich-text-output .ql-size-large { font-size: 1.25em; }
+.rich-text-output .ql-size-huge { font-size: 1.6em; }
