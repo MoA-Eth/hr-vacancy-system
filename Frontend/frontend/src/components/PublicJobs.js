@@ -260,7 +260,7 @@ function PublicJobs() {
                             </svg>
                           </div>
                           <div>
-                            <h3 className="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors leading-tight line-clamp-2">{v.title}</h3>
+                            <h3 className="font-semibold text-gray-900 group-hover:text-primary-700 transition-colors leading-tight">{v.title}</h3>
                             <p className="text-xs text-gray-400 mt-0.5">{v.department_name}</p>
                           </div>
                         </div>
@@ -300,15 +300,23 @@ function PublicJobs() {
                       </div>
 
                       {/* Card footer */}
-                      <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
+                      <div className="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
                         <span className="text-xs text-gray-400">{v.positions_available} position{v.positions_available > 1 ? 's' : ''} available</span>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); navigate(`/apply/${v.id}`); }}
-                          disabled={isExpired}
-                          className="btn-primary text-xs py-1.5 px-4 disabled:opacity-40"
-                        >
-                          {isExpired ? 'Closed' : 'Apply Now'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(`/jobs/${v.id}`); }}
+                            className="btn-secondary text-xs py-1.5 px-3"
+                          >
+                            See Detail
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(`/apply/${v.id}`); }}
+                            disabled={isExpired}
+                            className="btn-primary text-xs py-1.5 px-3 disabled:opacity-40"
+                          >
+                            {isExpired ? 'Closed' : 'Apply Now'}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
