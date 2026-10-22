@@ -12,6 +12,7 @@ function ApplicationList() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [vacancyFilter, setVacancyFilter] = useState('all');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'cards'
@@ -27,7 +28,7 @@ function ApplicationList() {
 
   useEffect(() => {
     filterApplications();
-  }, [applications, searchTerm, statusFilter, departmentFilter, dateFrom, dateTo, sortBy]);
+  }, [applications, searchTerm, statusFilter, departmentFilter, vacancyFilter, dateFrom, dateTo, sortBy]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -66,6 +67,11 @@ function ApplicationList() {
     // Department filter
     if (departmentFilter !== 'all') {
       filtered = filtered.filter(app => app.vacancy_department === departmentFilter);
+    }
+
+    // Vacancy filter
+    if (vacancyFilter !== 'all') {
+      filtered = filtered.filter(app => app.vacancy_title === vacancyFilter);
     }
 
     // Date range filter
@@ -158,6 +164,11 @@ function ApplicationList() {
     return depts.sort();
   };
 
+  const getVacancyTitles = () => {
+    const titles = [...new Set(applications.map(app => app.vacancy_title).filter(Boolean))];
+    return titles.sort();
+  };
+
   const getInitials = (name) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
@@ -166,6 +177,7 @@ function ApplicationList() {
     setSearchTerm('');
     setStatusFilter('all');
     setDepartmentFilter('all');
+    setVacancyFilter('all');
     setDateFrom('');
     setDateTo('');
     setSortBy('newest');
@@ -179,6 +191,7 @@ function ApplicationList() {
 
   const stats = getStats();
   const departments = getDepartments();
+  const vacancyTitles = getVacancyTitles();
 
   const statusBadge = (s) => ({
     applied:     'badge badge-yellow',
@@ -251,6 +264,10 @@ function ApplicationList() {
             <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)} className="form-input w-44">
               <option value="all">All Departments</option>
               {departments.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select value={vacancyFilter} onChange={(e) => setVacancyFilter(e.target.value)} className="form-input w-52">
+              <option value="all">All Vacancies</option>
+              {vacancyTitles.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div className="flex flex-wrap gap-3 items-center">

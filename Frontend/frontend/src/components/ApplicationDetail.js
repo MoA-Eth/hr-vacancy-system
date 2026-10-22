@@ -173,7 +173,13 @@ function ApplicationDetail() {
             {infoRow('Full Name', application.candidate.full_name)}
             {infoRow('Email', application.candidate.email)}
             {infoRow('Phone', application.candidate.phone)}
-            {infoRow('Address', application.candidate.address)}
+            {infoRow('Address', [
+              application.candidate.state,
+              application.candidate.zone,
+              application.candidate.woreda,
+              application.candidate.kebele,
+              application.candidate.house_number && `House No. ${application.candidate.house_number}`,
+            ].filter(Boolean).join(', '))}
             {infoRow('Date of Birth', application.candidate.date_of_birth ? new Date(application.candidate.date_of_birth).toLocaleDateString() : null)}
             {infoRow('Nationality', application.candidate.nationality)}
             {infoRow('Reference', application.reference_code)}
