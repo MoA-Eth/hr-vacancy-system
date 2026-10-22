@@ -211,12 +211,15 @@ function ApplicationDetail() {
               <div className="space-y-3">
                 {application.candidate.education_history.map((edu, i) => (
                   <div key={i} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between">
-                      <p className="text-sm font-medium text-gray-900">{edu.degree || edu.institution}</p>
-                      <span className="text-xs text-gray-400">{edu.year_of_graduation || edu.end_date}</span>
+                    <div className="flex justify-between gap-2">
+                      <p className="text-sm font-medium text-gray-900">{edu.degree || edu.institution || '—'}</p>
+                      <span className="text-xs text-gray-400 whitespace-nowrap">
+                        {[edu.start_date, edu.end_date].filter(Boolean).join(' — ') || edu.year_of_graduation || '—'}
+                      </span>
                     </div>
-                    <p className="text-xs text-gray-500">{edu.institution}</p>
+                    {edu.institution && <p className="text-xs text-gray-500">{edu.institution}</p>}
                     {edu.field_of_study && <p className="text-xs text-gray-400">Field: {edu.field_of_study}</p>}
+                    {edu.grade && <p className="text-xs text-gray-400">Grade/CGPA: <span className="font-medium text-gray-600">{edu.grade}</span></p>}
                   </div>
                 ))}
               </div>
@@ -228,11 +231,16 @@ function ApplicationDetail() {
               <div className="space-y-3">
                 {application.candidate.training_history.map((t, i) => (
                   <div key={i} className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between">
-                      <p className="text-sm font-medium text-gray-900">{t.degree || t.course_name || t.title}</p>
-                      <span className="text-xs text-gray-400">{t.end_date || t.year || t.completion_date}</span>
+                    <div className="flex justify-between gap-2">
+                      <p className="text-sm font-medium text-gray-900">{t.degree || t.course_name || t.title || '—'}</p>
+                      <span className="text-xs text-gray-400 whitespace-nowrap">
+                        {[t.start_date, t.end_date].filter(Boolean).join(' — ') || t.year || t.completion_date || '—'}
+                      </span>
                     </div>
-                    <p className="text-xs text-gray-500">{t.field_of_study || t.institution || t.provider}</p>
+                    {(t.field_of_study || t.institution || t.provider) && (
+                      <p className="text-xs text-gray-500">{t.field_of_study || t.institution || t.provider}</p>
+                    )}
+                    {t.grade && <p className="text-xs text-gray-400">Grade/CGPA: <span className="font-medium text-gray-600">{t.grade}</span></p>}
                   </div>
                 ))}
               </div>
