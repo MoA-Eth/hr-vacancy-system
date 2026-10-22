@@ -396,7 +396,7 @@ function ApplyForm() {
                   {[
                     { name: 'resume', label: 'Resume/CV *', hint: null },
                     { name: 'education_documents', label: 'Education Documents', hint: 'Transcripts, certificates, diplomas' },
-                    { name: 'other_documents', label: 'Other Documents', hint: 'References, portfolio, certificates' },
+                    { name: 'other_documents', label: 'Other Documents (a cover letter, work experience credentials,certificates..etc)', hint: 'References, portfolio, certificates' },
                   ].map(({ name, label, hint }) => (
                     <div key={name}>
                       <label className="form-label">{label}</label>
