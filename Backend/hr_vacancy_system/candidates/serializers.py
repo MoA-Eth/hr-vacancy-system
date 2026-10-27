@@ -77,7 +77,22 @@ class ApplicationCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = ['vacancy', 'full_name', 'email', 'phone', 'state', 'zone', 'woreda', 'kebele', 'house_number', 'is_available', 'reference_name', 'reference_phone', 'reference_address', 'education_history', 'training_history', 'resume', 'education_documents', 'other_documents']
-    
+
+    def validate(self, attrs):
+        MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+        file_fields = {
+            'resume': 'Resume/CV',
+            'education_documents': 'Education Documents',
+            'other_documents': 'Other Documents',
+        }
+        for field, label in file_fields.items():
+            f = attrs.get(field)
+            if f and f.size > MAX_FILE_SIZE:
+                raise serializers.ValidationError({
+                    field: f'{label} must not exceed 5MB. Your file is {f.size / (1024*1024):.1f}MB.'
+                })
+        return attrs
+
     def create(self, validated_data):
         # Extract candidate fields
         candidate_data = {

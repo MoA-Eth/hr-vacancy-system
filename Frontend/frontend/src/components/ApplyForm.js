@@ -69,9 +69,18 @@ function ApplyForm() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
   const handleFileChange = (e) => {
     const { name } = e.target;
-    setFormData(prev => ({ ...prev, [name]: e.target.files[0] }));
+    const file = e.target.files[0];
+    if (file && file.size > MAX_FILE_SIZE) {
+      setFieldErrors(prev => ({ ...prev, [name]: `File must not exceed 5MB (your file is ${(file.size / (1024 * 1024)).toFixed(1)}MB)` }));
+      e.target.value = '';
+      return;
+    }
+    setFieldErrors(prev => ({ ...prev, [name]: undefined }));
+    setFormData(prev => ({ ...prev, [name]: file }));
   };
 
   const handleEducationChange = (index, field, value) => {
@@ -394,9 +403,9 @@ function ApplyForm() {
               {currentStep === 3 && (
                 <div className="space-y-4">
                   {[
-                    { name: 'resume', label: 'Resume/CV *', hint: null },
-                    { name: 'education_documents', label: 'Education Documents', hint: 'Transcripts, certificates, diplomas' },
-                    { name: 'other_documents', label: 'Other Documents (a cover letter, work experience credentials,certificates..etc)', hint: 'References, portfolio, certificates' },
+                    { name: 'resume', label: 'Resume/CV *', hint: 'PDF, DOC or DOCX — max 5MB' },
+                    { name: 'education_documents', label: 'Education Documents', hint: 'Transcripts, certificates, diplomas — max 5MB' },
+                    { name: 'other_documents', label: 'Other Documents (cover letter, work experience credentials, certificates…)', hint: 'References, portfolio, certificates — max 5MB' },
                   ].map(({ name, label, hint }) => (
                     <div key={name}>
                       <label className="form-label">{label}</label>

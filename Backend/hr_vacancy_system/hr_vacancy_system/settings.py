@@ -219,8 +219,8 @@ SIMPLE_JWT = {
 # File upload settings
 # ---------------------------------------------------------------------------
 
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
+FILE_UPLOAD_MAX_MEMORY_SIZE = 20971520  # 20MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 20971520  # 20MB
 
 
 # ---------------------------------------------------------------------------
