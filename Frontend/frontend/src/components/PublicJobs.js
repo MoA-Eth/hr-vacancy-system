@@ -274,7 +274,7 @@ function PublicJobs() {
                         {isExpired ? (
                           <span className="badge badge-red flex-shrink-0">Closed</span>
                         ) : days <= 3 ? (
-                          <span className="badge badge-yellow flex-shrink-0">⚠ {days}d left</span>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-300 text-gray-900 flex-shrink-0">⚠ {days}d left</span>
                         ) : (
                           <span className="text-xs text-gray-400 flex-shrink-0">Due {new Date(v.deadline).toLocaleDateString()}</span>
                         )}
